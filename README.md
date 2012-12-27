@@ -41,53 +41,19 @@ This program requires that raw sequencing data is pre-processed into two files
 
 -Lines beginning with "# " (hash followed by a space) are ignored
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 86e7d5a534a1cae8432dc4976f6fbbb4513c3a68
-USAGE:
+MAIN PROGRAM:
 
-Requires the addition of the R module prior to running (i.e. module add R/2.12.1)
+distribution_clustering.pl-
+-This is the main program creating the distribution-based OTUs. To use this requires that R is accessible by calling R through the system command. If not, it will not run.
+-To use type "perl distribution_clustering.pl" to get a complete list of requirements and options
 
-<<<<<<< HEAD
-=======
-{} indicates required input (order unimportant)
-[] indicates optional input (order unimportant)
+ACCESSORY PROGRAMS:
 
->>>>>>> 86e7d5a534a1cae8432dc4976f6fbbb4513c3a68
-This program is designed to identify sequencing errors and sequences that can not be distinguished from sequencing error in Illumina data.
-It identifies sequencing error by looking for a parent for each sequence, starting with the most abundant across libraries in your matrx file.
-Parents are sequences that satisfies the following:
-1.) The parental abundance is above the defined the abundance threshold
-2.) It is within a specific distance cut-off
-3.) The parental distribution is not statistically significantly different from the child distribution as determined by chi-sq test p-value above the pvalue threshold
+Merge_parent_child.pl-
+-Use this file to create a list (similar to the output of various clustering algorithms) where each line is one OTU with the unique ids of each non-redundant seqeunce identifier listed. The parent sequence is the first entry, with children (if applicable) list in tab delimited manner following the parent on each line.
 
-A child is assigned to the most similar (smallest distance) parental sequence that fulfills the above criteria.
-Once assigned as a child, a sequence will not be considered as a parent.
 
-Example usage:
-perl find_seq_errors29.pl -d file.dst -m file.mat -R R_file -out output.err -log file.log
 
-Options:
 
--d distance_file          A distance file, or list of distance files (i.e. aligned and unaligned) separated by commas
 
--m matrix_file            The distribition of this sequence (a.k.a. 100% identity cluster) across your libraries
-
--R R_output_prefix        The output prefix used for the R_files (requires R/2.12.1, make sure to add this module before running this program)
-
--out output.err           The output file name containing the a list of errors and to be parsed into a typical OTU file format by err2list.pl
-
--log LOGFILE              Name of the log file where some information will be logged
-
--old old_err_files        Old stats file or list of old stats files separates by commas. The program will resume where it left off from previous runs.
-
--dist DIST_CUTOFF         The distance cutoff that you would consider merging sequences to (default is 0.1)
-
--abund ABUND_CUTOFF       The abundance cutoff that a parent has to satisfy to be considered. 0 if you want to merge uninformative sequence diversity but take longer, 10 increases speed but detects many methodological errors (sequencing, PCR)
-
--pval PVALUE_CUTOFF       P-value cutoff above which OTUs will be merged. Default=0.0005 (do not go below 9.999E-05 or simulated pvalues will not work) Lower pvalues create fewer OTUs, higher pvalues create more OTUs.
-
--JS JS_CUTOFF             Use the Jensen-Shannon diistance to determine whether to merge values (default=off), especially when ABUND_CUTOFF = 0. Good JS_CUTOFF value around 0.2 (best to use when abundance thresh = 0). Will be applied after failing chi-sq test cut-off.
-
--verbose                  Print out verbose information about progress to log file. Useful in debugging.

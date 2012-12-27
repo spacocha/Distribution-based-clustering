@@ -21,7 +21,7 @@ R/2.12.1
 
 REQUIRED INPUTS:
 
-This program requires that raw seqeuncing data is pre-processed into two files
+This program requires that raw sequencing data is pre-processed into two files
 
 1.) Distance file of unique seqeunces
 

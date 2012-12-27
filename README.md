@@ -41,11 +41,20 @@ This program requires that raw sequencing data is pre-processed into two files
 
 -Lines beginning with "# " (hash followed by a space) are ignored
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 86e7d5a534a1cae8432dc4976f6fbbb4513c3a68
 USAGE:
 
 Requires the addition of the R module prior to running (i.e. module add R/2.12.1)
 
+<<<<<<< HEAD
+=======
+{} indicates required input (order unimportant)
+[] indicates optional input (order unimportant)
+
+>>>>>>> 86e7d5a534a1cae8432dc4976f6fbbb4513c3a68
 This program is designed to identify sequencing errors and sequences that can not be distinguished from sequencing error in Illumina data.
 It identifies sequencing error by looking for a parent for each sequence, starting with the most abundant across libraries in your matrx file.
 Parents are sequences that satisfies the following:

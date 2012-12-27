@@ -53,7 +53,7 @@ It identifies sequencing error by looking for a parent for each sequence, starti
 Parents are sequences that satisfies the following:
 1.) The parental abundance is above the defined the abundance threshold
 2.) It is within a specific distance cut-off
-3.) The parental distribution is not statistically significantly different from the child distribution as determined by fisher (when possible), or chi-sq test above the pvalue threshold
+3.) The parental distribution is not statistically significantly different from the child distribution as determined by chi-sq test p-value above the pvalue threshold
 
 A child is assigned to the most similar (smallest distance) parental sequence that fulfills the above criteria.
 Once assigned as a child, a sequence will not be considered as a parent.

@@ -1,0 +1,6 @@
+x <- read.table("R_file.in", header = FALSE)
+htest2 <-chisq.test(x)
+chip <-htest2$p.value
+chiexp <-htest2$expected
+write.table(chip,file="R_file.chip",sep="	",row.names=FALSE,col.names=FALSE)
+write.table(chiexp,file="R_file.chiexp",sep="	",row.names=FALSE,col.names=FALSE)

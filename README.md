@@ -25,40 +25,40 @@ This program requires that raw sequencing data is pre-processed into two files
 
 1.) Distance file of unique seqeunces
 
--The raw data must be combined into unique (non-redundant) sequences, which works very well when all sequences are processed to the same length.
+- The raw data must be combined into unique (non-redundant) sequences, which works very well when all sequences are processed to the same length.
 
--A pairwise distance matrix must be created for all unique sequences and presented as a .dst file.
+- A pairwise distance matrix must be created for all unique sequences and presented as a .dst file.
 
--For large sequence files, such as those from Illumina or 454 pyrosequencing, FastTree is recommended.
+- For large sequence files, such as those from Illumina or 454 pyrosequencing, FastTree is recommended.
 
--Also, both aligned and unaligned distances can be entered use as inputs, reducing the error from misalignment.
+- Also, both aligned and unaligned distances can be entered use as inputs, reducing the error from misalignment.
 
 2.) Community-by-sequence matrix
 
--This is a file containing a unique name for each non-redundant sequence and the number of counts for that seqeunce in each sampled community
+- This is a file containing a unique name for each non-redundant sequence and the number of counts for that seqeunce in each sampled community
 
--Communities are columns and OTUs are rows
+- Communities are columns and OTUs are rows
 
--Lines beginning with "# " (hash followed by a space) are ignored
+- Lines beginning with "# " (hash followed by a space) are ignored
 
 
 MAIN PROGRAM:
 
 distribution_clustering.pl
 
--This is the main program creating the distribution-based OTUs. To use this requires that R is accessible by calling R through the system command. If not, it will not run.
+- This is the main program creating the distribution-based OTUs. To use this requires that R is accessible by calling R through the system command. If not, it will not run.
 
--To use type "perl distribution_clustering.pl" to get a complete list of requirements and options
+- To use type "perl distribution_clustering.pl" to get a complete list of requirements and options
 
 ACCESSORY PROGRAMS:
 
 Merge_parent_child.pl
 
--Use this file to create a list (similar to the output of various clustering algorithms) where each line is one OTU with the unique ids of each non-redundant seqeunce identifier listed. The parent sequence is the first entry, with children (if applicable) list in tab delimited manner following the parent on each line.
+- Use this file to create a list (similar to the output of various clustering algorithms) where each line is one OTU with the unique ids of each non-redundant seqeunce identifier listed. The parent sequence is the first entry, with children (if applicable) list in tab delimited manner following the parent on each line.
 
 Matrix_from_list.pl
 
--Use this file to create a community-by-OTU matrix from the OTU list file
+- Use this file to create a community-by-OTU matrix from the OTU list file
 
 TEST DATA:
 
@@ -77,22 +77,22 @@ Raw sequencing data can be generated in various ways. This will outline a simple
 mothur commands as follows:
 
 mothur > fastq.info(fastq=raw_data.fastq)
-#This will generate raw_data.fasta and raw_data.qual
+- This will generate raw_data.fasta and raw_data.qual
 
 mothur > trim.seqs(fasta=raw_data.fasta, oligos=oligos.tab, qfile=raw_data.qual, qthreshold=48, minlength=76, maxhomop=10)
-#This will generate raw_data.trim.fasta, with low quality sequences filtered out. All sequences will be the same length
+- This will generate raw_data.trim.fasta, with low quality sequences filtered out. All sequences will be the same length
 
 mothur > unique.seqs(fasta=raw_data.trim.fasta)
-#This will reduce redundant sequences and represent them as one "unique" sequences in raw_data.trim.unique.fasta
+- This will reduce redundant sequences and represent them as one "unique" sequences in raw_data.trim.unique.fasta
 
 mothur > align.seqs(fasta=raw_data.trim.unique.fasta, reference=new_silva_short_unique_1_151.fa)
-#align sequences to a referece alignment
+- align sequences to a referece alignment
 
 mothur > dist.seqs(fasta=raw_data.trim.unique.align, cutoff=0.10, output=square)
-#creates the phylip formatted distance matrix (raw_data.trim.unique.square.dist), used in distribution_clustering.pl
+- creates the phylip formatted distance matrix (raw_data.trim.unique.square.dist), used in distribution_clustering.pl
 
 mothur > count.seqs(name=raw_data.trim.names, group=raw_data.group)
-#creates a community-by-sequence count matrix (raw_data.trim.seq.count) to be used as input to distribution-clustering.pl
+- creates a community-by-sequence count matrix (raw_data.trim.seq.count) to be used as input to distribution-clustering.pl
 
 
 THE DISTRIBUTION-BASED CLUSTERING PROGRAM:

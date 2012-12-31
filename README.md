@@ -62,7 +62,7 @@ Matrix_from_list.pl
 
 TEST DATA:
 
-Files presented in the "mothur" directory can be used either as test data to ensure the programs are functioning properly, or as a template for appropraite input requirements.
+Files presented in the "test_data" directory can be used either as test data to ensure the programs are functioning properly, or as a template for appropraite input requirements.
 
 - Raw data (raw_data.fastq and raw_data.group) are the inputs for the mothur "pre-processing" pipeline. Also required are the oligos.tab, required for filtering out primer/adapters from sequencing construct, and new_silva_short_unique_1_151.fa, a reference alignment trimmed to the size of the construct. The raw data is a subset of Illumina generated sequence data from a known input community. Only four input sequences were kept, along with a few errors generated during sequencing.
 

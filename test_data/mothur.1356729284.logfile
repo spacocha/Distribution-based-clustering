@@ -1,0 +1,150 @@
+Linux version
+
+Using ReadLine
+
+Running 64Bit Version
+
+mothur v.1.23.1
+Last updated: 1/17/2012
+
+by
+Patrick D. Schloss
+
+Department of Microbiology & Immunology
+University of Michigan
+pschloss@umich.edu
+http://www.mothur.org
+
+When using, please cite:
+Schloss, P.D., et al., Introducing mothur: Open-source, platform-independent, community-supported software for describing and comparing microbial communities. Appl Environ Microbiol, 2009. 75(23):7537-41.
+
+Distributed under the GNU General Public License
+
+Type 'help()' for information on the commands that are available
+
+Type 'quit()' to exit program
+Interactive Mode
+
+
+mothur > fastq.info(fastq=raw_data.fastq)
+
+Output File Names: 
+raw_data.fasta
+raw_data.qual
+
+mothur > trim.seqs(fasta=raw_data.fasta, oligos=../oligos.tab, qfile=raw_data.qual, qthreshold=48, minlength=76, maxhomop=10)
+[WARNING]: your oligos file does not contain any group names.  mothur will not create a groupfile.
+1000
+2000
+3000
+4000
+5000
+6000
+7000
+8000
+9000
+10000
+11000
+12000
+13000
+14000
+15000
+16000
+17000
+18000
+19000
+20000
+21000
+22000
+23000
+24000
+25000
+26000
+27000
+28000
+29000
+30000
+31000
+32000
+33000
+34000
+35000
+35295
+
+
+Output File Names: 
+raw_data.trim.fasta
+raw_data.scrap.fasta
+raw_data.trim.qual
+raw_data.scrap.qual
+
+
+mothur > unique.seqs(fasta=raw_data.trim.fasta)
+1000	1
+2000	1
+3000	1
+4000	1
+5000	1
+6000	1
+7000	1
+8000	1
+9000	1
+10000	1
+11000	1
+12000	1
+13000	1
+14000	1
+15000	1
+16000	3
+17000	5
+18000	5
+19000	5
+20000	5
+21000	5
+22000	5
+23000	5
+24000	5
+25000	7
+26000	8
+27000	8
+28000	8
+29000	8
+30000	8
+31000	8
+31420	9
+
+Output File Names: 
+raw_data.trim.unique.fasta
+raw_data.trim.names
+
+
+mothur > align.seqs(fasta=raw_data.trim.unique.fasta, reference=/data/spacocha/tmp/new_silva_short_unique_1_151.fa)
+
+Reading in the /data/spacocha/tmp/new_silva_short_unique_1_151.fa template sequences...	DONE.
+It took 0 to read  5445 sequences.
+Aligning sequences from raw_data.trim.unique.fasta ...
+9
+It took 0 secs to align 9 sequences.
+
+
+Output File Names: 
+raw_data.trim.unique.align
+raw_data.trim.unique.align.report
+
+
+mothur > dist.seqs(fasta=raw_data.trim.unique.align, cutoff=0.10, output=square)
+0	0
+8	0
+
+Output File Name: 
+raw_data.trim.unique.square.dist
+
+It took 0 to calculate the distances for 9 sequences.
+
+mothur > count.seqs(name=raw_data.trim.names, group=raw_data.group)
+
+Output File Name: 
+raw_data.trim.seq.count
+
+
+mothur > quit()

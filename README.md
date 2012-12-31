@@ -15,9 +15,9 @@ This program should be used in conjunction with other sequence analysis packages
 
 REQUIREMENTS:
 
-perl v5.8.8
+perl (v5.8.8, other versions unverified)
 
-R/2.12.1
+R (2.12.1, others unverified)
 
 REQUIRED INPUTS:
 
@@ -25,11 +25,11 @@ This program requires that raw sequencing data is pre-processed into two files
 
 1.) Distance file of unique seqeunces
 
--The raw data must be combined into unique (non-redundant) sequences
+-The raw data must be combined into unique (non-redundant) sequences, which works very well when all sequences are processed to the same length.
 
--The distance must be calculated for all unique sequences and presented as a .dst file
+-A pairwise distance matrix must be created for all unique sequences and presented as a .dst file.
 
--For large sequence files, such as those from Illumina or 454 pyrosequencing, FastTree is recommended
+-For large sequence files, such as those from Illumina or 454 pyrosequencing, FastTree is recommended.
 
 -Also, both aligned and unaligned distances can be entered use as inputs, reducing the error from misalignment.
 
@@ -44,16 +44,53 @@ This program requires that raw sequencing data is pre-processed into two files
 
 MAIN PROGRAM:
 
-distribution_clustering.pl-
+distribution_clustering.pl
+
 -This is the main program creating the distribution-based OTUs. To use this requires that R is accessible by calling R through the system command. If not, it will not run.
+
 -To use type "perl distribution_clustering.pl" to get a complete list of requirements and options
 
 ACCESSORY PROGRAMS:
 
-Merge_parent_child.pl-
+Merge_parent_child.pl
+
 -Use this file to create a list (similar to the output of various clustering algorithms) where each line is one OTU with the unique ids of each non-redundant seqeunce identifier listed. The parent sequence is the first entry, with children (if applicable) list in tab delimited manner following the parent on each line.
 
+Matrix_from_list.pl
+
+-Use this file to create a community-by-OTU matrix from the OTU list file
+
+PRE_PROCESSING SEQUENCE DATA FROM RAW FASTQ:
+
+Raw sequencing data can be generated in various ways. This will outline a simple method using mothur to process raw fastq data from Illumina for used with distribution-based clustering.
+
+mothur commands as follows (or similar):
+
+mothur > fastq.info(fastq=raw_data.fastq)
+
+mothur > trim.seqs(fasta=raw_data.fasta, oligos=oligos.tab, qfile=raw_data.qual, qthreshold=48, minlength=76, maxhomop=10)
+
+mothur > unique.seqs(fasta=raw_data.trim.fasta)
+
+mothur > align.seqs(fasta=raw_data.trim.unique.fasta, reference=new_silva_short_unique_1_151.fa)
+
+mothur > count.seqs(name=raw_data.trim.names, group=raw_data.group)
 
 
+THE DISTRIBUTION-BASED CLUSTERING PROGRAM:
 
+The pre-processing steps outlined above should provide all of the files needed as input for the distribution-based clustering program.
 
+To clustering mainly sequencing error:
+perl distribution-clusteirng.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_error -out seq_error_only.err -log LOG_error
+
+To clustering microdiversity:
+perl distribution-clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_micro -out microdiversity.err -log LOG_micro -abund 0 -JS 0.02
+
+POST-PROCESSING:
+
+In order to make the error files into either a list or a community-by-OTU matrix, use the following perl programs on the output of the distribution-based clustering algorithm.
+
+perl Merge_parent_child.pl ./test_data/seq_errors_only.err > ./test_data/seq_errors_only.err.list
+
+perl Matrix_from_list.pl ./test_data/unique_test.mat ./test_data/seq_errors_only.err.list > ./test_data/seq_errors_only.err.list.mat 

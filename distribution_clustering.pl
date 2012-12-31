@@ -1,7 +1,7 @@
 #! /usr/bin/perl -w
-#   Edited on 08/16/12 
+#   Edited on 12/30/12 
 #
-$programname="find_seq_errors29.pl";
+$programname="distribution-clustering.pl";
 
 	die dieHelp () unless (@ARGV); 
 
@@ -432,9 +432,47 @@ print OUT "Finished\n";
 close (OUT);
 close (LOG);
 
-############
-#subroutines
-############
+cleanup();
+
+##################
+# subroutines
+#################
+sub cleanup {
+
+    if ("-e ${Rfile}.chi"){
+	system ("rm ${Rfile}.chi");
+	print LOG "Removed working file ${Rfile}.chi\n" if ($verbose);
+    }
+    if ("-e ${Rfile}.chiexp"){
+	system ("rm ${Rfile}.chiexp");
+	print LOG "Removed working file ${Rfile}.chiexp\n"if ($verbose);
+    }
+    if ("-e ${Rfile}.chip"){
+	system ("rm ${Rfile}.chip");
+	print LOG "Removed working file ${Rfile}.chip\n"if ($verbose);
+    }
+    if ("-e ${Rfile}.chisim"){
+        system ("rm ${Rfile}.chisim");
+        print LOG "Removed working file ${Rfile}.chisim\n"if ($verbose);
+    }
+    if ("-e ${Rfile}.chisimp"){
+        system ("rm ${Rfile}.chisimp");
+        print LOG "Removed working file ${Rfile}.chisimp\n"if ($verbose);
+    }   
+    if ("-e ${Rfile}.err"){
+        system ("rm ${Rfile}.err");
+        print LOG "Removed working file ${Rfile}.err\n"if ($verbose);
+    }
+    if ("-e ${Rfile}.in"){
+        system ("rm ${Rfile}.in");
+        print LOG "Removed working file ${Rfile}.in\n"if ($verbose);
+    }
+    if ("-e ${Rfile}.lic"){
+        system ("rm ${Rfile}.lic");
+        print LOG "Removed working file ${Rfile}.lic\n"if ($verbose);
+    }
+
+}
 
 sub dst2transhash {
     my ($file) = (@_);

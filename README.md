@@ -2,8 +2,6 @@ Distribution-based-clustering
 =============================
 Created by Sarah Pacocha Preheim
 
-Last modified: 12/27/2012
-
 DESCRIPTION:
 
 Extremely accurate algorithm used to group DNA sequences from microbial communities into operational taxonomic units (proxy for species) for ecological or biomedical research. This algorithm uses the information contained in the distribution of DNA sequences across samples along with sequence similarity to cluster sequences more accurately than other methods that are currently available. Developed for Illumina next-generation sequencing libraries, but applicable to any sequencing platform with sufficient number of counts per sample to infer distribution patterns. 

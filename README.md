@@ -74,22 +74,22 @@ Raw sequencing data can be generated in various ways. This will outline a simple
 
 mothur commands as follows:
 
-mothur > fastq.info(fastq=raw_data.fastq)
-- This will generate raw_data.fasta and raw_data.qual
+    mothur > fastq.info(fastq=raw_data.fastq)
+ - This will generate raw_data.fasta and raw_data.qual
 
-mothur > trim.seqs(fasta=raw_data.fasta, oligos=oligos.tab, qfile=raw_data.qual, qthreshold=48, minlength=76, maxhomop=10)
+    mothur > trim.seqs(fasta=raw_data.fasta, oligos=oligos.tab, qfile=raw_data.qual, qthreshold=48, minlength=76, maxhomop=10)
 - This will generate raw_data.trim.fasta, with low quality sequences filtered out. All sequences will be the same length
 
-mothur > unique.seqs(fasta=raw_data.trim.fasta)
+    mothur > unique.seqs(fasta=raw_data.trim.fasta)
 - This will reduce redundant sequences and represent them as one "unique" sequences in raw_data.trim.unique.fasta
 
-mothur > align.seqs(fasta=raw_data.trim.unique.fasta, reference=new_silva_short_unique_1_151.fa)
+    mothur > align.seqs(fasta=raw_data.trim.unique.fasta, reference=new_silva_short_unique_1_151.fa)
 - align sequences to a referece alignment
 
-mothur > dist.seqs(fasta=raw_data.trim.unique.align, cutoff=0.10, output=square)
+    mothur > dist.seqs(fasta=raw_data.trim.unique.align, cutoff=0.10, output=square)
 - creates the phylip formatted distance matrix (raw_data.trim.unique.square.dist), used in distribution_clustering.pl
 
-mothur > count.seqs(name=raw_data.trim.names, group=raw_data.group)
+    mothur > count.seqs(name=raw_data.trim.names, group=raw_data.group)
 - creates a community-by-sequence count matrix (raw_data.trim.seq.count) to be used as input to distribution-clustering.pl
 
 
@@ -99,19 +99,19 @@ The pre-processing steps outlined above should provide all of the files needed a
 
 The four most abundant sequences are true input sequences. To clustering only seqeunces that represent errors use the following parameters:
 
-perl ../distribution_clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_error -out seq_error_only.err -log LOG_error
+    perl ../distribution_clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_error -out seq_error_only.err -log LOG_error
 
 Two of the true input sequences are distributed across samples in a similar manner (representing microdiversity). To clustering sequencing error and microdiversity, use the following paramenters:
 
-perl ../distribution_clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_micro -out microdiversity.err -log LOG_micro -abund 0 -JS 0.02
+    perl ../distribution_clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_micro -out microdiversity.err -log LOG_micro -abund 0 -JS 0.02
 
 POST-PROCESSING:
 
 In order to make the error files into either a list or a community-by-OTU matrix, use the following perl programs on the output of the distribution-based clustering algorithm.
 
-perl ../merge_parent_child.pl seq_error_only.err > seq_error_only.err.list
+    perl ../merge_parent_child.pl seq_error_only.err > seq_error_only.err.list
 
-perl ../matrix_from_list.pl  raw_data.trim.seq.count seq_error_only.err.list > seq_error_only.err.list.mat
+    perl ../matrix_from_list.pl  raw_data.trim.seq.count seq_error_only.err.list > seq_error_only.err.list.mat
 
 These files can be used with other programs (mothur, Qiime) for commonly performed community analysis.
 
@@ -129,8 +129,8 @@ Mothur
 
  -Following the Schloss SOP (http://www.mothur.org/wiki/Schloss_SOP), substitute distribution_clustering.pl for the "cluster" command and use the "-mothur" flag in merge_parent_child.pl to obtain three files (list, rabund and sabund). These can be used in subsequent analyses as described.
 
-    -perl ../merge_parent_child.pl -e seq_error_only.err -c raw_data.trim.seq.count -o seq_err_only_mothur -mothur -group ../raw_data.group -name raw_data.trim.names
-    -mothur > make.shared(list=seq_err_only_mothur.list, group=seq_err_only_mothur.groups, label=distOTU)
+    perl ../merge_parent_child.pl -e seq_error_only.err -c raw_data.trim.seq.count -o seq_err_only_mothur -mothur -group ../raw_data.group -name raw_data.trim.names
+    mothur > make.shared(list=seq_err_only_mothur.list, group=seq_err_only_mothur.groups, label=distOTU)
 
  -Continue with SOP as needed
 
@@ -138,8 +138,8 @@ Qiime
 
  -The resulting data can be used in Qiime, following the de novo OTU picking pathway (http://qiime.org/tutorials/tutorial.html). The required files (seqs_rep_set.fasta and qiime formatted OTU list, seq_error_only.err.list as above or otu_map.txt or seqs_otu.txt in the tutorial) can be generated with the "-qiime" flag in merge_parent_child.pl. This flag will provide an OTU list with each read represented by the library name (in the group file) and a unique number. The seqs_rep_set.fasta are all parent sequences which are the representative sequences for the OTU. This can be used in Qiime as the output of pick_otus.py (i.e. Qiime formatted OTU map). 
 
-    -perl ../merge_parent_child.pl -e seq_error_only.err -c raw_data.trim.seq.count -o seq_err_only_qiime -qiime raw_data.trim.unique.fasta -group raw_data.group -name raw_data.trim.names
-    -make_otu_table.py -i seq_err_only_qiime.map -o output_table
-    -assign_taxonomy.py -i seq_err_only_qiime.rep.fasta -m rdp -c 0.5
+    perl ../merge_parent_child.pl -e seq_error_only.err -c raw_data.trim.seq.count -o seq_err_only_qiime -qiime raw_data.trim.unique.fasta -group raw_data.group -name raw_data.trim.names
+    make_otu_table.py -i seq_err_only_qiime.map -o output_table
+    assign_taxonomy.py -i seq_err_only_qiime.rep.fasta -m rdp -c 0.5
 
  -Continue with analysis as needed

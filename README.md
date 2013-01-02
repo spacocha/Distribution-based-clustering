@@ -99,11 +99,11 @@ The pre-processing steps outlined above should provide all of the files needed a
 
 The four most abundant sequences are true input sequences. To clustering only seqeunces that represent errors use the following parameters:
 
-perl ../distribution-clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_error -out seq_error_only.err -log LOG_error
+perl ../distribution_clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_error -out seq_error_only.err -log LOG_error
 
 Two of the true input sequences are distributed across samples in a similar manner (representing microdiversity). To clustering sequencing error and microdiversity, use the following paramenters:
 
-perl ../distribution-clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_micro -out microdiversity.err -log LOG_micro -abund 0 -JS 0.02
+perl ../distribution_clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_micro -out microdiversity.err -log LOG_micro -abund 0 -JS 0.02
 
 POST-PROCESSING:
 

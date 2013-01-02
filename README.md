@@ -78,19 +78,19 @@ mothur commands as follows:
  - This will generate raw_data.fasta and raw_data.qual
 
     mothur > trim.seqs(fasta=raw_data.fasta, oligos=oligos.tab, qfile=raw_data.qual, qthreshold=48, minlength=76, maxhomop=10)
-- This will generate raw_data.trim.fasta, with low quality sequences filtered out. All sequences will be the same length
+ - This will generate raw_data.trim.fasta, with low quality sequences filtered out. All sequences will be the same length
 
     mothur > unique.seqs(fasta=raw_data.trim.fasta)
-- This will reduce redundant sequences and represent them as one "unique" sequences in raw_data.trim.unique.fasta
+ - This will reduce redundant sequences and represent them as one "unique" sequences in raw_data.trim.unique.fasta
 
     mothur > align.seqs(fasta=raw_data.trim.unique.fasta, reference=new_silva_short_unique_1_151.fa)
-- align sequences to a referece alignment
+ - align sequences to a referece alignment
 
     mothur > dist.seqs(fasta=raw_data.trim.unique.align, cutoff=0.10, output=square)
-- creates the phylip formatted distance matrix (raw_data.trim.unique.square.dist), used in distribution_clustering.pl
+ - creates the phylip formatted distance matrix (raw_data.trim.unique.square.dist), used in distribution_clustering.pl
 
     mothur > count.seqs(name=raw_data.trim.names, group=raw_data.group)
-- creates a community-by-sequence count matrix (raw_data.trim.seq.count) to be used as input to distribution-clustering.pl
+ - creates a community-by-sequence count matrix (raw_data.trim.seq.count) to be used as input to distribution-clustering.pl
 
 
 THE DISTRIBUTION-BASED CLUSTERING PROGRAM:

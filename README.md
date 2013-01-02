@@ -8,7 +8,7 @@ Extremely accurate algorithm used to group DNA sequences from microbial communit
 
 WHEN TO USE THIS PROGRAM:
 
-This program should be used in conjunction with other sequence analysis packages (i.e. mothur, Qiime) to obtain the most accurate OTUs based on all of the information available in both the genetic and the distribution data.
+This program should be used in conjunction with other sequence analysis packages (i.e. mothur, Qiime) to obtain the most accurate operational taxonomic units (OTUs) based on all of the information available in both the genetic and the distribution data.
 
 
 REQUIREMENTS:
@@ -60,7 +60,7 @@ Matrix_from_list.pl
 
 TEST DATA:
 
-Files presented in the "test_data" directory can be used either as test data to ensure the programs are functioning properly, or as a template for appropraite input requirements.
+Files presented in the "test_data" directory can be used either as test data to ensure the programs are functioning properly, or as a template for appropriate input requirements.
 
 - Raw data (raw_data.fastq and raw_data.group) are the inputs for the mothur "pre-processing" pipeline. Also required are the oligos.tab, required for filtering out primer/adapters from sequencing construct, and new_silva_short_unique_1_151.fa, a reference alignment trimmed to the size of the construct. The raw data is a subset of Illumina generated sequence data from a known input community. Only four input sequences were kept, along with a few errors generated during sequencing.
 
@@ -99,19 +99,19 @@ The pre-processing steps outlined above should provide all of the files needed a
 
 The four most abundant sequences are true input sequences. To clustering only seqeunces that represent errors use the following parameters:
 
-perl distribution-clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_error -out seq_error_only.err -log LOG_error
+perl ../distribution-clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_error -out seq_error_only.err -log LOG_error
 
 Two of the true input sequences are distributed across samples in a similar manner (representing microdiversity). To clustering sequencing error and microdiversity, use the following paramenters:
 
-perl distribution-clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_micro -out microdiversity.err -log LOG_micro -abund 0 -JS 0.02
+perl ../distribution-clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_micro -out microdiversity.err -log LOG_micro -abund 0 -JS 0.02
 
 POST-PROCESSING:
 
 In order to make the error files into either a list or a community-by-OTU matrix, use the following perl programs on the output of the distribution-based clustering algorithm.
 
-perl Merge_parent_child.pl ./test_data/seq_errors_only.err > ./test_data/seq_errors_only.err.list
+perl ../merge_parent_child.pl seq_error_only.err > seq_error_only.err.list
 
-perl Matrix_from_list.pl ./test_data/unique_test.mat ./test_data/seq_errors_only.err.list > ./test_data/seq_errors_only.err.list.mat
+perl ../matrix_from_list.pl  raw_data.trim.seq.count seq_error_only.err.list > seq_error_only.err.list.mat
 
 These files can be used with other programs (mothur, Qiime) for commonly performed community analysis.
 

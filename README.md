@@ -120,3 +120,26 @@ RESULTS:
 raw_data.trim.seq.count shows there are four unique sequences with more than 1000 counts across all libraries. These are the true input sequences. Unique sequences with less than 100 counts are errors generated during sequencing. There are two options. First, only sequencing error can be merged using the default parameters of the distribution based clustering. Alternatively, two of the true input sequences that are distributed in all three libraries equally could be merged, as these are closely related sequences (only differing by 1 bp). However, the other two true sequences are also only 1 bp different, but do not have the same distribution. This could be important information which should be retained. To cluster microdiveristy, use the alternative parameters presented above.
  
 In seq_error_only.err.list.mat, there are four resulting OTUs, representing the four true input sequences. Unique sequences with less than 100 counts were merged with the parent sequences. In microdiversity.err.list.mat, there are three resulting OTUs. This represents two distinct unique sequences (HWI-EAS413_0071_FC:2:1:14612:9620#AGTAGAT/1 and HWI-EAS413_0071_FC:2:1:7014:1558#AGTAGAT/1) and one OTU with two merged true sequences because they are found in all libraries in a similar manner (HWI-EAS413_0071_FC:2:1:2111:1182#GTACGTT/1 and HWI-EAS413_0071_FC:2:1:7250:2720#GTACGTT/1). All sequencing error sequences were also grouped with the appropriate parents.
+
+COMMUNITY ANALYSIS:
+
+Use the results in various programs as follows.
+
+Mothur
+
+ -Following the Schloss SOP (http://www.mothur.org/wiki/Schloss_SOP), substitute distribution_clustering.pl for the "cluster" command and use the "-mothur" flag in merge_parent_child.pl to obtain three files (list, rabund and sabund). These can be used in subsequent analyses as described.
+
+    -perl ../merge_parent_child.pl -e seq_error_only.err -c raw_data.trim.seq.count -o seq_err_only_mothur -mothur -group ../raw_data.group -name raw_data.trim.names
+    -mothur > make.shared(list=seq_err_only_mothur.list, group=seq_err_only_mothur.groups, label=distOTU)
+
+ -Continue with SOP as needed
+
+Qiime
+
+ -The resulting data can be used in Qiime, following the de novo OTU picking pathway (http://qiime.org/tutorials/tutorial.html). The required files (seqs_rep_set.fasta and qiime formatted OTU list, seq_error_only.err.list as above or otu_map.txt or seqs_otu.txt in the tutorial) can be generated with the "-qiime" flag in merge_parent_child.pl. This flag will provide an OTU list with each read represented by the library name (in the group file) and a unique number. The seqs_rep_set.fasta are all parent sequences which are the representative sequences for the OTU. This can be used in Qiime as the output of pick_otus.py (i.e. Qiime formatted OTU map). 
+
+    -perl ../merge_parent_child.pl -e seq_error_only.err -c raw_data.trim.seq.count -o seq_err_only_qiime -qiime raw_data.trim.unique.fasta -group raw_data.group -name raw_data.trim.names
+    -make_otu_table.py -i seq_err_only_qiime.map -o output_table
+    -assign_taxonomy.py -i seq_err_only_qiime.rep.fasta -m rdp -c 0.5
+
+ -Continue with analysis as needed

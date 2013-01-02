@@ -1,12 +1,54 @@
 #! /usr/bin/perl -w
 
-die "Usage: error_file > redirect\n" unless (@ARGV);
-($error) = (@ARGV);
-chomp ($error);
-#make the pvalue hash to use later
+$programname="merge_parent_child.pl";
 
-#read in the error first with suggestions on which to merge
-open (IN, "<$error" ) or die "Can't open $error\n";
+die dieHelp () unless (@ARGV); 
+
+$j=@ARGV;
+$i=0;
+
+until ($i >= $j){
+    $k=$i+1;
+    if ($ARGV[$i] eq "-e"){
+	$errorfile=$ARGV[$k];
+    } elsif ($ARGV[$i] eq "-c"){
+	$countfile=$ARGV[$k];
+    } elsif ($ARGV[$i] eq "-o"){
+	$output=$ARGV[$k];
+    } elsif ($ARGV[$i] eq "-qiime"){
+	$qiime++;
+	$fasta=$ARGV[$k];
+    } elsif ($ARGV[$i] eq "-mothur"){
+	$mothur++;
+    } elsif ($ARGV[$i] eq "-group"){
+        $groupfile=$ARGV[$k];
+    } elsif ($ARGV[$i] eq "-name"){
+        $namefile=$ARGV[$k];
+    } elsif ($ARGV[$i] eq "-h" || $ARGV[$i] eq "--help" || $ARGV[$i] eq "-help"){
+	exit dieHelp ();
+    }
+    $i++;
+}
+#Terminate program if essential flags are not provided
+die "Please follow command line args
+Output: ${output}
+error file:${errorfile}
+countfile:${countfile}\n" unless ($output && $errorfile && $countfile);
+chomp ($output);
+chomp ($errorfile);
+chomp ($countfile);
+chomp ($fasta) if ($fasta);
+if ($mothur){
+    die "group and name  files required\n" unless ($groupfile && $namefile);
+}
+if ($qiime){
+    die "fasta, group and name files required\n" unless ($groupfile && $namefile && $fasta);
+}
+chomp ($groupfile) if ($groupfile);
+chomp ($namefile) if ($namefile);
+
+#read in the error first
+open (IN, "<$errorfile" ) or die "Can't open $errorfile\n";
 while ($line =<IN>){
     chomp ($line);
     next unless ($line);
@@ -27,13 +69,284 @@ while ($line =<IN>){
 }
 close (IN);
 
-foreach $OTU (sort keys %allhash){
-    next if ($childhash{$OTU});
-    print "$OTU";
-    if (%{$hash{$parent}}){
-	foreach $otherOTU (sort keys %{$hash{$OTU}}){
-	    print "\t$otherOTU";
+#read in count file
+open (IN, "<$countfile" ) or die "Can't open $countfile\n";
+$first=1;
+while ($line =<IN>){
+    chomp ($line);
+    next unless ($line);
+    ($oldOTU, @p)=split ("\t", $line);
+    if ($oldOTU=~/^(ID.+M)/){
+	($OTU)=$oldOTU=~/^(ID.+M)/;
+    } else {
+	$OTU=$oldOTU;
+    }
+    if ($first){
+        (@headers)=(@p);
+        $first=();
+    } else {
+        $i=0;
+        $j=@p;
+	$matabund{$OTU}=$p[0] if ($headers[0] eq "total");
+        until ($i >=$j){
+            $mathash{$OTU}{$headers[$i]}=$p[$i];
+	    $matabund{$OTU}+=$p[$i] unless ($headers[0] eq "total");
+	    $mathashgot{$OTU}{$headers[$i]}++;
+            $i++;
+        }
+    }
+}
+close (IN);
+
+#read in name file
+open (IN, "<${namefile}") or die "Can't open $namefile\n";
+while ($line=<IN>){
+    chomp ($line);
+    next unless ($line);
+    ($unique, $readentry)= split ("\t", $line);
+    $namehash{$unique}=$readentry;
+}
+
+close (IN);
+
+#read in group file
+open (IN, "${groupfile}") or die "Can't open $groupfile\n";
+while ($line=<IN>){
+    chomp ($line);
+    next unless ($line);
+    ($read, $group)= split ("\t", $line);
+    $grouphash{$read}=$group;
+}
+
+close (IN);
+
+#pick formatting
+$formatted=();
+if ($mothur){
+    formatmothur();
+    $formatted++;
+}
+
+if ($qiime){
+    formatqiime();
+    $formatted++;
+}
+
+unless ($formatted){
+    foreach $OTU (sort keys %allhash){
+	next if ($childhash{$OTU});
+	print "$OTU";
+	if (%{$hash{$parent}}){
+	    foreach $otherOTU (sort keys %{$hash{$OTU}}){
+		print "\t$otherOTU";
+	    }
+	}
+	print "\n";
+    }
+}
+
+#############
+#Subroutines
+#############
+
+
+sub dieHelp {
+
+die "Usage: perl $programname {-e error_file -c count_file} [options]
+
+{} indicates required input (order unimportant)
+[] indicates optional input (order unimportant)
+
+Example usage:
+perl $programname -e seq_error_only.err -c raw_data.trim.seq.count -mothur 
+
+    Options:
+    -e error_file             A distance file, or list of distance files (i.e. aligned and unaligned) separated by commas
+    -c count_file             The distribition of this sequence (a.k.a. 100% identity cluster) across your libraries
+    -o output_prefix          Include an output prefix (including path if necessary) where the output files will be generated. Can not be a folder name. 
+                              Example \"-o ./results_dir/unique\" where results_dir exists but ./results_dir/unique does not. 
+    -mothur                   Format sequences for analysis with mothur. Generates three files; output_list, output_rabund and output_sabund.
+    -qiime fasta_file         For Qiime formatted output, provide the fasta_file (example:raw_data.trim.unique.fasta). Generates two outputs; output.rep.fasta and output.list.     
+    -group group_file         For both Qiime and mothur formatted outputs, the groupfile is required. This is a list of each read and the group it belongs to (i.e. raw_data.group).
+    -name name_file           For both Qiime and mothur formatted outputs, the names file is required. This is a list of which reads belong to whih unqiue sequence
+\n";
+}
+
+sub formatmothur {
+#make rabund file with label\t# of OTUs\tRank order of abundance
+    open (RABUND, ">${output}.rabund") or die "Can't open ${output}.rabund\n";
+
+#make sabund file with label\t#of seqs in dom OTU\tNum with 1 seq\tNum with 2 seqs...
+    open (SABUND, ">${output}.sabund") or die "Can't open ${output}.sabund\n";
+
+#make list with label\tnum_otus\tOTU1(commas between seqs)\tOTU2...
+    open (LIST, ">${output}.list") or die "Can't open ${output}.list\n";
+
+#make groups file with only the new groups
+    open (GROUPS, ">${output}.groups") or die "Can't open ${output}.groups\n";
+
+    #give them a label
+    print RABUND "distOTU";
+    print SABUND "distOTU";
+    print LIST "distOTU";
+
+    $totalnumOTU=0;
+    foreach $OTU (sort keys %allhash){
+        next if ($childhash{$OTU});
+        #print "$OTU";
+	$totalnumOTU++;
+	$OTUabund=$matabund{$OTU};
+	print "Initital $OTU\t$matabund{$OTU}\n";
+        if (%{$hash{$OTU}}){
+            foreach $otherOTU (sort keys %{$hash{$OTU}}){
+		#count the total number of seqs in each OTU for sabund
+		#count the total abundance of all seqs in OTU
+		$OTUabund+=$matabund{$otherOTU};
+		print "other $otherOTU\t$matabund{$otherOTU}\n";
+            }
+        }
+	$OTUabundhash{$OTUabund}++;
+	if ($largestabund){
+	    if ($OTUabund>$largestabund){
+		$largestabund=$OTUabund;
+	    } 
+	} else {
+	    $largestabund=$OTUabund;
 	}
     }
-    print "\n";
+    
+    print RABUND "\t$totalnumOTU";
+    foreach $abund (sort {$b <=> $a} keys %OTUabundhash){
+	print RABUND "\t$abund"
+    }
+    print RABUND "\n";
+    close (RABUND);
+
+    print LIST "\t$totalnumOTU";
+    foreach $OTU (sort keys %allhash){
+        next if ($childhash{$OTU});
+	if ($namehash{$OTU}){
+	    print LIST "\t$namehash{$OTU}";
+	    (@reads)=split (",", $namehash{$OTU});
+	    print "Makeing groups for $OTU\n";
+	    foreach $read (@reads){
+		if ($grouphash{$read}){
+		    print GROUPS "$read\t$grouphash{$read}\n";
+		} else {
+		    die "Missing grouphash $read\n";
+		}
+	    }
+	} else {
+	    die "Missing namehash for $OTU\n";
+	}
+        if (%{$hash{$OTU}}){
+            foreach $otherOTU (sort keys %{$hash{$OTU}}){
+		if ($namehash{$otherOTU}){
+		    print LIST ",${namehash{$otherOTU}}";
+		    print "Making groups for $otherOTU\n";
+		    (@reads)= split (",", $namehash{$otherOTU});
+		    foreach $read (@reads){
+			if ($grouphash{$read}){
+			    print GROUPS "$read\t$grouphash{$read}\n";
+			} else {
+			    die "Missing grouphash $read\n";
+			}
+		    }
+		} else {
+		    die "Missing namehash for $otherOTU\n";
+		}
+	    }
+	}
+    }
+    print LIST "\n";
+
+    $i=1;
+    $j=$largestabund;
+    print SABUND "\t$largestabund";
+    until ($i>$largestabund){
+	if ($OTUabundhash{$i}){
+	    print SABUND "\t$OTUabundhash{$i}";
+	} else {
+	    print SABUND "\t0";
+	}
+	$i++;
+    }
+    close (LIST);
+    close (SABUND);
+    close (RABUND);
+    close (GROUPS);
+}
+
+sub formatqiime {
+
+#read in the fasta file
+    $/=">";
+    open (IN, "<${fasta}") or die "Can't open ${fasta}\n";
+    while ($line=<IN>){
+	chomp ($line);
+	next unless ($line);
+	($name, @seqs)=split ("\n", $line);
+	($seq)=join ("", @seqs);
+	$seqhash{$name}=$seq;
+    }
+    close (IN);
+    
+#make output.rep.fasta with parent sequences output only
+    open (REP, ">${output}.rep.fasta") or die "Can't open ${output}.rep.fasta\n";
+    
+#make output.list of reads with names converted to lib_count
+    open (MAP, ">${output}.map") or die "Can't open ${output}.map\n";
+
+    $OTUnum=0;
+    foreach $OTU (sort keys %allhash){
+	next if ($childhash{$OTU});
+	print MAP "$OTUnum";
+	if ($seqhash{$OTU}){
+	    print REP ">$OTUnum ${OTU}\n$seqhash{$OTU}\n";
+	} else {
+	    die "Missing OTU from fasta $OTU for OTUnum $OTUnum\n";
+	}
+	$countit=0;
+	if ($namehash{$OTU}){
+	    (@reads)=split (",", $namehash{$OTU});
+	    foreach $read (@reads){
+		if ($grouphash{$read}){
+		    #add a number for a unique name
+		    $groupnum{$grouphash{$read}}++;
+		    print MAP "\t${grouphash{$read}}_${groupnum{$grouphash{$read}}}";
+		    $countit++;
+		} else {
+		    die "Missing read from group $read\n";
+		}
+	    }
+	} else {
+	    die "Missing name hash for $OTU\n";
+	}
+	if (%{$hash{$OTU}}){
+	    foreach $otherOTU (sort keys %{$hash{$OTU}}){
+		$countit=0;
+		#do the same for other unique sequences in the group
+		if ($namehash{$otherOTU}){
+		    (@reads)=split (",", $namehash{$otherOTU});
+		    foreach $read (@reads){
+			if ($grouphash{$read}){
+			    $groupnum{$grouphash{$read}}++;
+			    print MAP "\t${grouphash{$read}}_${groupnum{$grouphash{$read}}}";
+			    $countit++;
+			} else {
+			    die "Missing read from group $read\n";
+			}
+		    }
+		}
+	    }
+	} else {
+	    die "Missing OTU from name hash $OTU\n";
+	}
+	print MAP "\n";
+	$OTUnum++;
+    }
+   
+    close (MAP);
+    close (REP);
+    
 }

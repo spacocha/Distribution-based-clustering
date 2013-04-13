@@ -50,6 +50,10 @@ distribution_clustering.pl
 
 ACCESSORY PROGRAMS:
 
+Adjust_fasta_mothur.pl
+
+- Use this file to create a mothur formatted fasta and qual files. This is a temporary solution to create mothur formatted files until mothur comes out with a more comprehensive package for dealing with Illumina data. Assuming the indexing information in contained within the header of the fasta
+
 Merge_parent_child.pl
 
 - Use this file to create a list (similar to the output of various clustering algorithms) where each line is one OTU with the unique ids of each non-redundant seqeunce identifier listed. The parent sequence is the first entry, with children (if applicable) list in tab delimited manner following the parent on each line.

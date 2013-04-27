@@ -153,3 +153,27 @@ Qiime
     assign_taxonomy.py -i seq_err_only_qiime.rep.fasta -m rdp -c 0.5
 
  -Continue with analysis as needed
+
+
+PARALLEL APPLICATION
+
+This program is difficult to run with large datasets, so it can be parallelized by clustering sequences with a fast clustering algorithm and running distribution_based_clustering.pl in parallel on each cluster of sequences. We have found that clustering to 90% can reduce much of the errors on mock community data with sequences that are different distributions.
+
+The follow can be used to parallelize the distribution.
+
+1.) Make the 90% clusters list file.
+A list file is formatted such that each line contains all the unique sequences in one cluster. The number of lines should equal the number of OTUs. An example of this using QIIME is as follows:
+
+       python /home/software/python/python-27/software/qiime/qiime-1.3.0/bin//pick_otus.py -i input.fa -o output_dir --otu_picking_method uclust --enable_rev_strand_match -s 0.9
+
+2.) Use the output (output_dir/input_otus.txt) to split the distribution matrix into different files
+
+#Make this script to divide the matrix according to the cluster list before parallelization
+
+3.) Run Distribution_based_clustering.pl without the distance matrix option and divide these clusters only when the distribution supports this on each dataset 
+
+    perl distribution_based_clustering.pl -m ${SGE_TASK_ID}.mat -out ${SGE_TASK_ID}.err
+
+4.) Combine all the files and run as above
+
+    cat *.err > all_err.txt

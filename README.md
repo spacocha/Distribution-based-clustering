@@ -109,11 +109,11 @@ The pre-processing steps outlined above should provide all of the files needed a
 
 The four most abundant sequences are true input sequences. To clustering only seqeunces that represent errors use the following parameters:
 
-    perl ../distribution_clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_error -out seq_error_only.err -log LOG_error
+    perl ../distribution_clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -out seq_error_only
 
 Two of the true input sequences are distributed across samples in a similar manner (representing microdiversity). To clustering sequencing error and microdiversity, use the following paramenters:
 
-    perl ../distribution_clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -R R_file_micro -out microdiversity.err -log LOG_micro -abund 0 -JS 0.02
+    perl ../distribution_clustering.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -out microdiversity -abund 0 -JS 0.02
 
 POST-PROCESSING:
 
@@ -131,49 +131,37 @@ raw_data.trim.seq.count shows there are four unique sequences with more than 100
  
 In seq_error_only.err.list.mat, there are four resulting OTUs, representing the four true input sequences. Unique sequences with less than 100 counts were merged with the parent sequences. In microdiversity.err.list.mat, there are three resulting OTUs. This represents two distinct unique sequences (HWI-EAS413_0071_FC:2:1:14612:9620#AGTAGAT/1 and HWI-EAS413_0071_FC:2:1:7014:1558#AGTAGAT/1) and one OTU with two merged true sequences because they are found in all libraries in a similar manner (HWI-EAS413_0071_FC:2:1:2111:1182#GTACGTT/1 and HWI-EAS413_0071_FC:2:1:7250:2720#GTACGTT/1). All sequencing error sequences were also grouped with the appropriate parents.
 
-COMMUNITY ANALYSIS:
-
-Use the results in various programs as follows.
-
-Mothur
-
- -Following the Schloss SOP (http://www.mothur.org/wiki/Schloss_SOP), substitute distribution_clustering.pl for the "cluster" command and use the "-mothur" flag in merge_parent_child.pl to obtain three files (list, rabund and sabund). These can be used in subsequent analyses as described.
-
-    perl ../merge_parent_child.pl -e seq_error_only.err -c raw_data.trim.seq.count -o seq_err_only_mothur -mothur -group ../raw_data.group -name raw_data.trim.names
-    mothur > make.shared(list=seq_err_only_mothur.list, group=seq_err_only_mothur.groups, label=distOTU)
-
- -Continue with SOP as needed
-
-Qiime
-
- -The resulting data can be used in Qiime, following the de novo OTU picking pathway (http://qiime.org/tutorials/tutorial.html). The required files (seqs_rep_set.fasta and qiime formatted OTU list, seq_error_only.err.list as above or otu_map.txt or seqs_otu.txt in the tutorial) can be generated with the "-qiime" flag in merge_parent_child.pl. This flag will provide an OTU list with each read represented by the library name (in the group file) and a unique number. The seqs_rep_set.fasta are all parent sequences which are the representative sequences for the OTU. This can be used in Qiime as the output of pick_otus.py (i.e. Qiime formatted OTU map). 
-
-    perl ../merge_parent_child.pl -e seq_error_only.err -c raw_data.trim.seq.count -o seq_err_only_qiime -qiime raw_data.trim.unique.fasta -group raw_data.group -name raw_data.trim.names
-    make_otu_table.py -i seq_err_only_qiime.map -o output_table
-    assign_taxonomy.py -i seq_err_only_qiime.rep.fasta -m rdp -c 0.5
-
- -Continue with analysis as needed
-
-
 PARALLEL APPLICATION
 
 This program is difficult to run with large datasets, so it can be parallelized by clustering sequences with a fast clustering algorithm and running distribution_based_clustering.pl in parallel on each cluster of sequences. We have found that clustering to 90% can reduce much of the errors on mock community data with sequences that are different distributions.
 
-The follow can be used to parallelize the distribution.
+Overview:
 
-1.) Make the 90% clusters list file.
-A list file is formatted such that each line contains all the unique sequences in one cluster. The number of lines should equal the number of OTUs. An example of this using QIIME is as follows:
+The overview of the parallel application is as follows. First, make an appropriate list of sequences to be analyzed together that is a subset of the larger file. The subset should be sequences that are closely related, we often use 90% identity clusters. The larger these clusters, the more accurate the program seems to be at reducing the total number of OTUs to the true number of input sequences in a mock community. However, we are limited by the size of the matrix loaded into the distribution_clustering.pl program on our computer. This limitation may change depending on the specific of your system. In general, if we have more than 10,000 sequences in one cluster, it is too many. Then cl
 
-       python /home/software/python/python-27/software/qiime/qiime-1.3.0/bin//pick_otus.py -i input.fa -o output_dir --otu_picking_method uclust --enable_rev_strand_match -s 0.9
+The follow can be used to parallelize the distribution. We have developed our parallel program on a linux Sun XXX node cluster. The scripts will have to be adapted to use on other systems.
 
-2.) Use the output (output_dir/input_otus.txt) to split the distribution matrix into different files
+1.) Make the variables file.
+The variables file contains all of the information necessary to run the parallel application. An example is ./parallel_dir/variables_file
 
-#Make this script to divide the matrix according to the cluster list before parallelization
 
-3.) Run Distribution_based_clustering.pl without the distance matrix option and divide these clusters only when the distribution supports this on each dataset 
+2.) Make the 90% clusters list file.
+A list file is formatted such that each line contains all the unique sequences in one cluster. We prefer a Progressive clustering method which clusters first at 99%, make the seed of the 99% and cluster those at 98% and so on. An example of this method submitted to a cluster is:
 
-    perl distribution_based_clustering.pl -m ${SGE_TASK_ID}.mat -out ${SGE_TASK_ID}.err
+       qsub -cwd ./parallel_dir/ProgressiveClustering.csh ./parallel_dir/variables_file
 
-4.) Combine all the files and run as above
 
-    cat *.err > all_err.txt
+3.) Use the output (output_dir/input_otus.list) to split the distribution matrix into different files
+Use the qsub_driver.pl to run for each line of the list.
+
+    	perl qsub_driver.pl ./variables_file
+
+
+4.) Check that all of the processes completed and re-run any failed attempts. This will create two files output_prefix.log and output_prefix.resubmit.pl. If there are errors in the .log file, the resubmit file should provide a list of commands that can be resubmitted. (This works only with 
+    
+    perl evaluate_parallel_results.pl ./variables_file output_prefix
+
+
+Combine all the files and run as above
+
+    cat ${UNIQUE}*.err > all_err.txt

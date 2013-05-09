@@ -8,7 +8,7 @@ Extremely accurate algorithm used to group DNA sequences from microbial communit
 
 WHEN TO USE THIS PROGRAM:
 
-This program should be used in conjunction with other sequence analysis packages (i.e. mothur, Qiime) to obtain the most accurate operational taxonomic units (OTUs) based on all of the information available in both the genetic and the distribution data.
+This program should be used with the scripts provided or in conjunction with other sequence analysis packages (i.e. mothur, Qiime) to obtain the operational taxonomic units (OTUs) that most accurately reflect the ecology of the input sequences they represent. This method does not cluster by distance alone, but instead using a combination to distance and distribution to inform the clustering. Thus, it is different from other methods in that it does not attempt to cluster by trying to use the rule-of-thumb genetic cut-off of 97% to estimate total species.
 
 
 REQUIREMENTS:
@@ -39,6 +39,65 @@ This program requires that raw sequencing data is pre-processed into two files
 
 - Lines beginning with "# " (hash followed by a space) are ignored
 
+RUNNING DISTRIBUTION-BASED CLUSTERING IN PARALLEL:
+
+Commonly, this program will be run in parallel on datasets that are fairly large. This section provides a quick-start guide to help you accomplish parallel clustering beginning from data that is de-replicated and has an associated sequence by library count matrix associated with it. For further information about how to get to this point, see "PRE_PROCESSING SEQUENCE DATA FROM RAW FASTQ" below.
+
+1.) Progressively cluster data using ProgressiveClustering.csh. variables_file contains many of the variables needed by various programs. The comments are meant walk you through what you need to input. Check the test_data for examples of each file.
+
+    ProgressiveClustering.csh ./variables_file
+
+2.) Create the files for processing in parallel using the output of the ProgressiveClustering.csh
+
+    perl create_parallel_files.pl unique_final.list unique.fa unique.f0.mat parallel_output
+
+This will create one fasta and one sequence by library matrix file for each line of the unique_final.list. These can be used in parallel to process the data
+
+3.) [Parallel] Align sequences to a reference and create the distance matrix
+
+    mothur "#align.seqs(fasta=parallel_output.1.fa, reference=new_silva_short_unique_1_151.fa)"
+    
+    FastTree -nt -makematrix parallel_output.1.align > parallel_output.1.align.dst
+
+    FastTree -nt -makematrix parallel_output.1.fa > parallel_output.1.unalign.dst
+
+    perl distribution_clustering.pl -m parallel_output.1.mat -d parallel_output.1.align.dst,parallel_output.1.unalign.dst -out parallel_output.1.process
+
+4.) Evaluate whether all parallel processes completed.
+
+    perl evaluate_parallel_results.pl ./variables_file eval_output
+
+5.) Re-run failed jobs using eval_output_resub.csh or -old flag in distribution_clustering.pl. This will continue where the other left off.
+
+6.) Make the final files.
+
+    cat *.err > all_err.txt
+
+    perl merge_parent_child.pl all_err.txt > all_err.list
+
+    perl filter_mat_from_list.pl parallel.1.f0.mat all_err.list eco > all_err.list.mat
+
+    perl fasta2filter_from_mat.pl all_err.list.mat parallel.fa > all_err.list.mat.fa
+
+[Continue to remove artifacts]
+7.) Align the sequences to the 16S rRNA gene and remove any OTUs that don't completely align.
+
+    mothur "#align.seqs(fasta=all_err.list.mat.fa, reference=new_silva_short_unique_1_151.fa)"
+
+    mothur "#fasta=./all_err.list.mat.align, start=1, end=151)"
+
+    perl filter_mat_from_fasta.pl all_err.list.mat ./all_err.list.mat.align.good > all_err.list.mat.good
+
+    perl fasta2filter_from_mat.pl all_err.list.mat.good all_err.list.mat.fa > all_err.list.mat.good.fa
+
+    perl fasta2uchime_mat.pl all_err.list.mat.good all_err.list.mat.good.fa > all_err.list.mat.good.uchime.fa
+
+    uchime4.0.87_i86linux32 --input all_err.list.mat.good.uchime.fa --uchimeout all_err.list.mat.good.uchime.res --minchunk 20 --abskew 10
+
+    perl filter_mat_uchime.pl all_err.list.mat.good.uchime.res all_err.list.mat.good > all_err.list.mat.good.uchime
+
+    perl fasta2filter_from_mat.pl all_err.list.mat.good.uchime all_err.list.mat.good.fa > all_err.list.mat.good.uchime.fa
+
 
 MAIN PROGRAM:
 
@@ -48,34 +107,60 @@ distribution_clustering.pl
 
 - To use type "perl distribution_clustering.pl" to get a complete list of requirements and options
 
-ACCESSORY PROGRAMS:
+REQUIRED ACCESSORY PROGRAMS:
 
-Adjust_fasta_mothur.pl
+Evaluate_parallel_results.pl
 
-- Use this file to create a mothur formatted fasta and qual files. This is a temporary solution to create mothur formatted files until mothur comes out with a more comprehensive package for dealing with Illumina data. Assuming the indexing information in contained within the header of the fasta
+- Use this program when running the data in parallel
 
 Merge_parent_child.pl
 
-- Use this file to create a list (similar to the output of various clustering algorithms) where each line is one OTU with the unique ids of each non-redundant seqeunce identifier listed. The parent sequence is the first entry, with children (if applicable) list in tab delimited manner following the parent on each line.
+- Use this file to create a list (similar to the output of various clustering algorithms) where each line is one OTU with the unique ids of each non-redundant seqeunce identifier listed. The parent sequence is the first entry, with children (if applicable) list in tab delimited manner following the parent on each line. The input of this program is the output of the distribution_clustering.pl program.
 
 Matrix_from_list.pl
 
-- Use this file to create a community-by-OTU matrix from the OTU list file
+- Use this file to create a community-by-OTU matrix from the OTU list file and a sequence by library matrix (i.e. one of the input files for distribution_clustering.pl)
+
+fasta2filter_from_mat.pl
+
+- Use this file to filter a full fasta file to only the representative sequences.
+
 
 TEST DATA:
 
 Files presented in the "test_data" directory can be used either as test data to ensure the programs are functioning properly, or as a template for appropriate input requirements.
 
-- Raw data (raw_data.fastq and raw_data.group) are the inputs for the mothur "pre-processing" pipeline. Also required are the oligos.tab, required for filtering out primer/adapters from sequencing construct, and new_silva_short_unique_1_151.fa, a reference alignment trimmed to the size of the construct. The raw data is a subset of Illumina generated sequence data from a known input community. Only four input sequences were kept, along with a few errors generated during sequencing.
+- raw_data.fastq is the raw data, a common starting point for most users. The raw data is a subset of Illumina generated sequence data from a known input community. Only four input sequences were kept, along with a few errors generated during sequencing.
 
-- Inputs for the distribution-based clustering program are raw_data.trim.unique.square.dist, a phylip formatted distance matrix of the unique sequences, and raw_data.trim.seq.count, a community-by-sequence matrix.
+- test_data.mapping is the mapping file for QIIME or test_data.mothur.mapping for mothur
 
-- The final file after processing the raw data with pre-processing (i.e. mothur), distribution-based clustering and post-processing is the community-by-OTU matrix, seq_error_only.err.list.mat or microdiversity.err.list.mat, depending on which parameters are used during clustering.
+- oligos.tab is required for filtering out primer/adapters from sequencing construct if not using mothur to de-multiples
+
+- new_silva_short_unique_1_151.fa is a reference alignment trimmed to the size of the construct. 
 
 PRE_PROCESSING SEQUENCE DATA FROM RAW FASTQ:
 
 Raw sequencing data can be generated in various ways. This will outline a simple method using mothur to process raw fastq data from Illumina for used with distribution-based clustering.
 
+OUR PIPELINE
+
+You can use our pipeline to process fastq data. 
+
+    1.) Create a trimmed, quality filtered file, formatted in the QIIME split_libraries_fastq.py format. The library name is the first entry in the header field, followed by "__ and a unique id (e.g. lib1_1 ) followed by a space with the header name from the fastq file (e.g. ">lib1_1 MISEQ578:1:1101:15644:2126#AATGTCAA/1 orig_bc=TTGACATT new_bc=TTGACATT bc_diffs=0"). Library names can not have any spaces, and as a general rule, it is safe to only include "." as the only non-alpha numeric characters. We generate these files with the following commands from a fastq file in the format ./test_data/raw_data.fastq
+
+    perl ~/bin/fastq2Qiime_barcode.pl ./test_data/raw_data.fastq > unique_bar.txt
+
+    split_libraries_fastq.py -i ./test_data/raw_data.fastq -b unique_bar.txt -o unique_output -m ./test_data/test_data.mapping --barcode_type 7 --min_per_read_length 99 --last_bad_quality_char Q --ma_barcode_errors 0 --max_bad_run_length 0 -o unique_output
+
+    mothur "#trim.seqs(fasta=./unique_output/seqs.fna, oligos=oligos.tab)"
+
+    perl ~/bin/revert_names_mothur3.pl unique_outout/seqs.fna unique_output/seqs.trim.fasta > unique_output/seqs.trim.names.fasta
+    
+	
+The results of this will be a list of sequences within 90% identity clusters, and the full fasta and sequence by library matrix used for downstream analysis.
+
+    
+MOTHUR
 mothur commands as follows:
 
     mothur > fastq.info(fastq=raw_data.fastq)

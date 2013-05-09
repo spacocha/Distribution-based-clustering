@@ -16,17 +16,19 @@ perl ${BIN}/OTU2lib_count_trans1.pl ${UNIQUE}.trans ${FNUMBER} > ${UNIQUE}.f${FN
 #prepare the file for uclust
 perl ${BIN}/fasta2uchime_2.pl ${UNIQUE}.f${FNUMBER}.mat ${UNIQUE}.fa > ${UNIQUE}.ab.fa
 
-#progressively cluster,
-uclust --input ${UNIQUE}.ab.fa --id 0.99 --uc ${UNIQUE}.99.uc --maxrejects 500 --maxaccepts 20
+#progressively cluster the first value
+uclust --input ${UNIQUE}.ab.fa --id 0.${UPPER} --uc ${UNIQUE}.${UPPER}.uc --maxrejects 500 --maxaccepts 20
 
-uclust --input ${UNIQUE}.ab.fa --uc2fasta ${UNIQUE}.99.uc  --output ${UNIQUE}.99.fa --types S
+uclust --input ${UNIQUE}.ab.fa --uc2fasta ${UNIQUE}.${UPPER}.uc  --output ${UNIQUE}.${UPPER}.fa --types S
 
-perl ${BIN}/fasta_remove_seed.pl ${UNIQUE}.99.fa > ${UNIQUE}.99.fa2
+perl ${BIN}/fasta_remove_seed.pl ${UNIQUE}.${UPPER}.fa > ${UNIQUE}.${UPPER}.fa2
 
-perl ${BIN}/UC2list2.pl ${UNIQUE}.99.uc > ${UNIQUE}.99.uc.list
-#repeat for 97-90
+perl ${BIN}/UC2list2.pl ${UNIQUE}.${UPPER}.uc > ${UNIQUE}.${UPPER}.uc.list
+#repeat for the rest of the range
 
-for i in 98 97 96 95 94 93 92 91 90
+UPPERM1=`expr ${UPPER} - 1`
+
+for ((i=${UPPERM1}; i >= ${LOWER} ; i--))
 do
 before=`expr $i + 1`
 uclust --input ${UNIQUE}.${before}.fa2 --id 0.${i} --uc ${UNIQUE}.${i}.uc --maxrejects 500 --maxaccepts 20

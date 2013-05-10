@@ -45,7 +45,7 @@ Commonly, this program will be run in parallel on datasets that are fairly large
 
 1.) Progressively cluster data using ProgressiveClustering.csh. variables_file contains many of the variables needed by various programs. The comments are meant walk you through what you need to input. Check the test_data for examples of each file.
 
-    ProgressiveClustering.csh ./variables_file
+    ProgressiveClustering5.csh ./variables_file
 
 2.) Create the files for processing in parallel using the output of the ProgressiveClustering.csh
 
@@ -53,7 +53,7 @@ Commonly, this program will be run in parallel on datasets that are fairly large
 
 This will create one fasta and one sequence by library matrix file for each line of the unique_final.list. These can be used in parallel to process the data
 
-3.) [Parallel] Align sequences to a reference and create the distance matrix. Then use these as input to the distribution_clustering.pl
+3.) [Parallel] Align sequences to a reference and create the distance matrix. Then use these as input to the distribution_clustering.pl. This is contained in eOTU_parallel.csh.
 
     mothur "#align.seqs(fasta=parallel_output.1.fa, reference=new_silva_short_unique_1_151.fa)"
     

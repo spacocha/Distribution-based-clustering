@@ -288,7 +288,7 @@ open (OUT, ">>${output}") or die "Can't open $output\n";
 
 #make the program files that R will use to run the Fisher exact, Chi Square and Correlation tests
 makeRexecutables ();
-$mergecutoff=10 unless ($mergecutoff);
+
 print LOG "Checking for seq errors\n" if ($verbose);
 print "Checking for errors\n";
 #start the error processing
@@ -300,7 +300,10 @@ foreach $oid (sort {$abundhash{$b} <=> $abundhash{$a}} keys %abundhash){
 	#this is the most abundant one, see if it clears the threshold
 	#otherwise, if you have singletons, they will all be seperate OTUs
 	#because the most abundant one isn't even above the threshold
-	if ($abundhash{$oid} < ${mergecutoff}){
+	if ($usedist){
+	    print LOG "Not mergine all because distance file is used\n" if ($verbose);
+	    $allparent="Not under mergeall, not all parent";
+	} elsif ($abundhash{$oid} < ${abundcutoff}){
 	    $mergeall=1;
 	    $allparent=$oid;
 	    print LOG "All will be merged into $oid\n" if ($verbose); 

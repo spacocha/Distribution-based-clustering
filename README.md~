@@ -121,27 +121,28 @@ OUR PIPELINE
 
 You can use our pipeline to process fastq data. 
 
-1.) Create a trimmed, quality filtered file, formatted in the QIIME split_libraries_fastq.py format. The library name is the first entry in the header field, followed by "__ and a unique id (e.g. lib1_1 ) followed by a space with the header name from the fastq file (e.g. ">lib1_1 MISEQ578:1:1101:15644:2126#AATGTCAA/1 orig_bc=TTGACATT new_bc=TTGACATT bc_diffs=0"). Library names can not have any spaces, and as a general rule, it is safe to only include "." as the only non-alpha numeric characters. We generate these files with the following commands from a fastq file in the format ./test_data/raw_data.fastq
+    1.) Create a trimmed, quality filtered file, formatted in the QIIME split_libraries_fastq.py format. The library name is the first entry in the header field, followed by "__ and a unique id (e.g. lib1_1 ) followed by a space with the header name from the fastq file (e.g. ">lib1_1 MISEQ578:1:1101:15644:2126#AATGTCAA/1 orig_bc=TTGACATT new_bc=TTGACATT bc_diffs=0"). Library names can not have any spaces, and as a general rule, it is safe to only include "." as the only non-alpha numeric characters. We generate these files with the following commands from a fastq file in the format ./test_data/raw_data.fastq
 
     RunQiime_rawdata.csh ./all_variables
     
-2.) Progressively cluster sequences with UCLUST into 90% identity clusters. The results of this will be a list of sequences within 90% identity clusters, and the full fasta and sequence by library matrix used for downstream analysis.
+    2.) Progressively cluster sequences with UCLUST into 90% identity clusters. The results of this will be a list of sequences within 90% identity clusters, and the full fasta and sequence by library matrix used for downstream analysis.
 
     ProgressiveClustering5.csh ./all_varables
     
-3.) Create the files to run in parallel
+
+    3.) Create the files to run in parallel
 
     create_parallel_files.pl unique.PC.final.list unique.fa unique.f0.mat unique process.f0
 
-4.) Run all of the processes in parallel. This is an example of how it would be run on SGE
+    4.) Run all of the processes in parallel. This is an example of how it would be run on SGE
 
     qsub -cwd -t 1-100 eOTU_parallel.csh ./all_variables
 
-5.) Evaluate the process
+    5.) Evaluate the process
 
     perl evaluate_parallel_results.pl ./all_variables eval_output
 
-6.) If all processes finished, clean them up
+    6.) If all processes finished, clean them up
 
     clean_up_parallel_ultra.csh ./all_variables
 

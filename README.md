@@ -53,7 +53,7 @@ Commonly, this program will be run in parallel on datasets that are fairly large
 
 This will create one fasta and one sequence by library matrix file for each line of the unique_final.list. These can be used in parallel to process the data
 
-3.) [Parallel] Align sequences to a reference and create the distance matrix
+3.) [Parallel] Align sequences to a reference and create the distance matrix. Then use these as input to the distribution_clustering.pl
 
     mothur "#align.seqs(fasta=parallel_output.1.fa, reference=new_silva_short_unique_1_151.fa)"
     
@@ -67,36 +67,11 @@ This will create one fasta and one sequence by library matrix file for each line
 
     perl evaluate_parallel_results.pl ./variables_file eval_output
 
-5.) Re-run failed jobs using eval_output_resub.csh or -old flag in distribution_clustering.pl. This will continue where the other left off.
+5.) Re-run failed jobs by using the -old flag in distribution_clustering.pl for each failed process. This will continue where the program left off.
 
-6.) Make the final files.
+6.) Make the final files. This involves creating a list from error files, a mat file from the list, and a fasta from the mat. (You can use clean_up_parallel_ultra.csh to remove OTUs that do not match the full length of the 16S region and chimeric sequences or do this seperately)
 
-    cat *.err > all_err.txt
-
-    perl merge_parent_child.pl all_err.txt > all_err.list
-
-    perl filter_mat_from_list.pl parallel.1.f0.mat all_err.list eco > all_err.list.mat
-
-    perl fasta2filter_from_mat.pl all_err.list.mat parallel.fa > all_err.list.mat.fa
-
-[Continue to remove artifacts]
-7.) Align the sequences to the 16S rRNA gene and remove any OTUs that don't completely align.
-
-    mothur "#align.seqs(fasta=all_err.list.mat.fa, reference=new_silva_short_unique_1_151.fa)"
-
-    mothur "#fasta=./all_err.list.mat.align, start=1, end=151)"
-
-    perl filter_mat_from_fasta.pl all_err.list.mat ./all_err.list.mat.align.good > all_err.list.mat.good
-
-    perl fasta2filter_from_mat.pl all_err.list.mat.good all_err.list.mat.fa > all_err.list.mat.good.fa
-
-    perl fasta2uchime_mat.pl all_err.list.mat.good all_err.list.mat.good.fa > all_err.list.mat.good.uchime.fa
-
-    uchime4.0.87_i86linux32 --input all_err.list.mat.good.uchime.fa --uchimeout all_err.list.mat.good.uchime.res --minchunk 20 --abskew 10
-
-    perl filter_mat_uchime.pl all_err.list.mat.good.uchime.res all_err.list.mat.good > all_err.list.mat.good.uchime
-
-    perl fasta2filter_from_mat.pl all_err.list.mat.good.uchime all_err.list.mat.good.fa > all_err.list.mat.good.uchime.fa
+    clean_up_parallel.csh ./variables_file
 
 
 MAIN PROGRAM:
@@ -148,19 +123,33 @@ You can use our pipeline to process fastq data.
 
     1.) Create a trimmed, quality filtered file, formatted in the QIIME split_libraries_fastq.py format. The library name is the first entry in the header field, followed by "__ and a unique id (e.g. lib1_1 ) followed by a space with the header name from the fastq file (e.g. ">lib1_1 MISEQ578:1:1101:15644:2126#AATGTCAA/1 orig_bc=TTGACATT new_bc=TTGACATT bc_diffs=0"). Library names can not have any spaces, and as a general rule, it is safe to only include "." as the only non-alpha numeric characters. We generate these files with the following commands from a fastq file in the format ./test_data/raw_data.fastq
 
-    perl ~/bin/fastq2Qiime_barcode.pl ./test_data/raw_data.fastq > unique_bar.txt
-
-    split_libraries_fastq.py -i ./test_data/raw_data.fastq -b unique_bar.txt -o unique_output -m ./test_data/test_data.mapping --barcode_type 7 --min_per_read_length 99 --last_bad_quality_char Q --ma_barcode_errors 0 --max_bad_run_length 0 -o unique_output
-
-    mothur "#trim.seqs(fasta=./unique_output/seqs.fna, oligos=oligos.tab)"
-
-    perl ~/bin/revert_names_mothur3.pl unique_outout/seqs.fna unique_output/seqs.trim.fasta > unique_output/seqs.trim.names.fasta
+    RunQiime_rawdata.csh ./all_variables
     
-	
-The results of this will be a list of sequences within 90% identity clusters, and the full fasta and sequence by library matrix used for downstream analysis.
+    2.) Progressively cluster sequences with UCLUST into 90% identity clusters. The results of this will be a list of sequences within 90% identity clusters, and the full fasta and sequence by library matrix used for downstream analysis.
 
+    ProgressiveClustering5.csh ./all_varables
     
-MOTHUR
+
+    3.) Create the files to run in parallel
+
+    create_parallel_files.pl unique.PC.final.list unique.fa unique.f0.mat unique process.f0
+
+    4.) Run all of the processes in parallel. This is an example of how it would be run on SGE
+
+    qsub -cwd -t 1-100 eOTU_parallel.csh ./all_variables
+
+    5.) Evaluate the process
+
+    perl evaluate_parallel_results.pl ./all_variables eval_output
+
+    6.) If all processes finished, clean them up
+
+    clean_up_parallel_ultra.csh ./all_variables
+
+
+MOTHUR-COMPLETE (not parallel)
+You can use method to process the files, but this will likely have to be one round.
+Do not attempt with more than 10 million reads (likely needs fewer)
 mothur commands as follows:
 
     mothur > fastq.info(fastq=raw_data.fastq)
@@ -216,37 +205,3 @@ raw_data.trim.seq.count shows there are four unique sequences with more than 100
  
 In seq_error_only.err.list.mat, there are four resulting OTUs, representing the four true input sequences. Unique sequences with less than 100 counts were merged with the parent sequences. In microdiversity.err.list.mat, there are three resulting OTUs. This represents two distinct unique sequences (HWI-EAS413_0071_FC:2:1:14612:9620#AGTAGAT/1 and HWI-EAS413_0071_FC:2:1:7014:1558#AGTAGAT/1) and one OTU with two merged true sequences because they are found in all libraries in a similar manner (HWI-EAS413_0071_FC:2:1:2111:1182#GTACGTT/1 and HWI-EAS413_0071_FC:2:1:7250:2720#GTACGTT/1). All sequencing error sequences were also grouped with the appropriate parents.
 
-PARALLEL APPLICATION
-
-This program is difficult to run with large datasets, so it can be parallelized by clustering sequences with a fast clustering algorithm and running distribution_based_clustering.pl in parallel on each cluster of sequences. We have found that clustering to 90% can reduce much of the errors on mock community data with sequences that are different distributions.
-
-Overview:
-
-The overview of the parallel application is as follows. First, make an appropriate list of sequences to be analyzed together that is a subset of the larger file. The subset should be sequences that are closely related, we often use 90% identity clusters. The larger these clusters, the more accurate the program seems to be at reducing the total number of OTUs to the true number of input sequences in a mock community. However, we are limited by the size of the matrix loaded into the distribution_clustering.pl program on our computer. This limitation may change depending on the specific of your system. In general, if we have more than 10,000 sequences in one cluster, it is too many. Then cl
-
-The follow can be used to parallelize the distribution. We have developed our parallel program on a linux Sun XXX node cluster. The scripts will have to be adapted to use on other systems.
-
-1.) Make the variables file.
-The variables file contains all of the information necessary to run the parallel application. An example is ./parallel_dir/variables_file
-
-
-2.) Make the 90% clusters list file.
-A list file is formatted such that each line contains all the unique sequences in one cluster. We prefer a Progressive clustering method which clusters first at 99%, make the seed of the 99% and cluster those at 98% and so on. An example of this method submitted to a cluster is:
-
-       qsub -cwd ./parallel_dir/ProgressiveClustering.csh ./parallel_dir/variables_file
-
-
-3.) Use the output (output_dir/input_otus.list) to split the distribution matrix into different files
-Use the qsub_driver.pl to run for each line of the list.
-
-    	perl qsub_driver.pl ./variables_file
-
-
-4.) Check that all of the processes completed and re-run any failed attempts. This will create two files output_prefix.log and output_prefix.resubmit.pl. If there are errors in the .log file, the resubmit file should provide a list of commands that can be resubmitted. (This works only with 
-    
-    perl evaluate_parallel_results.pl ./variables_file output_prefix
-
-
-Combine all the files and run as above
-
-    cat ${UNIQUE}*.err > all_err.txt

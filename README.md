@@ -53,7 +53,7 @@ Commonly, this program will be run in parallel on datasets that are fairly large
 
 This will create one fasta and one sequence by library matrix file for each line of the unique_final.list. These can be used in parallel to process the data
 
-3.) [Parallel] Align sequences to a reference and create the distance matrix. Then use these as input to the distribution_clustering.pl. This is contained in eOTU_parallel.csh.
+3.) [Parallel] Align sequences to a reference and create the distance matrix. Then use these as input to the distribution_clustering.pl. Both steps 2 and 3 are contained in eOTU_parallel.csh.
 
     mothur "#align.seqs(fasta=parallel_output.1.fa, reference=new_silva_short_unique_1_151.fa)"
     

@@ -17,7 +17,13 @@ perl (v5.8.8, other versions unverified)
 
 R (2.12.1, others unverified)
 
+PIPELINE DEPENDENCIES:
+
 uclust (1.2.22, others unverified)
+
+mothur (v.1.31.1, others unverified)
+
+FastTree (2.1.3, others unverified)
 
 REQUIRED INPUTS:
 

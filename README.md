@@ -17,6 +17,8 @@ perl (v5.8.8, other versions unverified)
 
 R (2.12.1, others unverified)
 
+uclust (1.2.22, others unverified)
+
 REQUIRED INPUTS:
 
 This program requires that raw sequencing data is pre-processed into two files

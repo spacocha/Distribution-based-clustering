@@ -21,7 +21,7 @@ PIPELINE DEPENDENCIES, although other similar programs can be used which accompl
 
 QIIME (1.3.0, others unverified) or mothur (v.1.31.1, others unverified) for pre-processing raw fastq data
 
-uclust (1.2.22, others unverified) for Progressive clustering for parallel processing
+USEARCH (6.0.307, others unverified) for Progressive clustering for parallel processing
 
 mothur (v.1.31.1, others unverified) for alignments
 
@@ -47,7 +47,7 @@ Now, processes the raw fastq with qiime using the shell:
     ./RunQiime_rawdata.csh ./all_variables
 
 This will create a folder ./output_dir/unique_output with the results. Specifically, the file seqs.trim.names.76.fa will be used for further analysis. Again, this type of file can be created in other ways, although the next program will not work unless the fasta is formatted with the library name as the first part of the header like this:
->lib2_0 HWI-EAS413_0071_FC:2:1:2111:1182#GTACGTT/1 orig_bc=GTACGTT new_bc=GTACGTT bc_diffs=0
+\>lib2_0 HWI-EAS413_0071_FC:2:1:2111:1182#GTACGTT/1 orig_bc=GTACGTT new_bc=GTACGTT bc_diffs=0
 TACGTAGGGTGCGAGCGTTAATCGGAATTACTGGGCGTAAAGCGTGCGCAGGCGGTTTTGTAAGTCAGATGTGAAA
 
 2.) Progressively cluster sequences with USEARCH into 90% identity clusters. The results of this will be a list of sequences within 90% identity clusters, and the full fasta and sequence by library matrix used for downstream analysis.

@@ -216,7 +216,7 @@ In order to make the error files into either a list or a community-by-OTU matrix
 
     perl ../matrix_from_list.pl  raw_data.trim.seq.count seq_error_only.err.list eco > seq_error_only.err.list.mat
 
-These files can be used with other programs (mothur, Qiime) for commonly performed community analysis.
+Repeat for the microdiversity.err files. These files can be used with other programs (mothur, Qiime) for commonly performed community analysis.
 
 RESULTS:
 

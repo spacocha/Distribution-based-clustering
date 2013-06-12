@@ -1,0 +1,9 @@
+UNIQUE ./output_dir/unique
+FNUMBER 0
+AFTER process.f0
+Looking for 1 of each file type
+All of the 1 of error files (./output_dir/unique.*.process.f0.err) were created
+Evaluating how many of the 1 are finished
+All of the error files finished
+All of the 1 of log files (./output_dir/unique.*.process.f0.log) were created
+There were no WARNINGs

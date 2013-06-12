@@ -1,0 +1,5 @@
+forward	YRYRGTGCCAGCMGCCGCGGNNN
+#reverse	NGACTACHVGGGTWTCTAAT
+barcode	AGTAGAT	lib1
+barcode	GTACGTT	lib2
+barcode	TCATTAA	lib3

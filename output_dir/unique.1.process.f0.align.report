@@ -1,0 +1,10 @@
+QueryName	QueryLength	TemplateName	TemplateLength	SearchMethod	SearchScore	AlignmentMethod	QueryStart	QueryEnd	TemplateStart	TemplateEnd	PairwiseAlignmentLength	GapsInQuery	GapsInTemplate	LongestInsert	SimBtwnQuery&Template
+ID0000001M	76	ID0002541P_4	76	kmer	100.00	needleman	1	76	1	76	76	0	0	0	100.00
+ID0000002M	76	ID0002541P_4	76	kmer	97.10	needleman	1	76	1	76	76	0	0	0	98.68
+ID0000003M	76	ID0003981P_2	76	kmer	100.00	needleman	1	76	1	76	76	0	0	0	100.00
+ID0000004M	76	ID0003981P_2	76	kmer	92.75	needleman	1	76	1	76	76	0	0	0	98.68
+ID0000005M	76	ID0002487P_1	76	kmer	100.00	needleman	1	76	1	76	76	0	0	0	100.00
+ID0000006M	76	ID0002487P_1	76	kmer	92.75	needleman	1	76	1	76	76	0	0	0	98.68
+ID0000007M	76	ID0000869P_3	76	kmer	100.00	needleman	1	76	1	76	76	0	0	0	100.00
+ID0000008M	76	ID0000869P_3	76	kmer	98.55	needleman	1	75	2	76	75	0	0	0	100.00
+ID0000009M	76	ID0000869P_3	76	kmer	92.75	needleman	1	76	1	76	76	0	0	0	98.68

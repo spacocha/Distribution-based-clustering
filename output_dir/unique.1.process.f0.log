@@ -1,0 +1,44 @@
+Running: find_seq_errors34.pl
+perl find_seq_errors34.pl -m ./output_dir/unique.1.process.f0.mat -d ./output_dir/unique.1.process.f0.align.dst,./output_dir/unique.1.process.f0.unalign.dst -out output_dir/unique.1.process.f0
+Time started: 6-11-2013 20:1:59
+Input:./output_dir/unique.1.process.f0.align.dst,./output_dir/unique.1.process.f0.unalign.dst
+Distributions:./output_dir/unique.1.process.f0.mat
+Routput:output_dir/unique.1.process.f0.Rfile
+Pvalue cutoff:0.0005
+Abundance cutoff:10
+Output:output_dir/unique.1.process.f0.err
+Old Stats:None
+Verbose:no
+Distance cutoff:0.1
+Type of distance matrix:Default: matrix
+Using all libraries in matrix file
+R license Info:
+
+This software is distributed under the terms of the GNU General
+Public License Version 2, June 1991.  The terms of this license
+are in a file called COPYING which you should have received with
+this software and which can be displayed by RShowDoc("COPYING").
+
+If you have not received a copy of this file, you can obtain one
+at http://www.R-project.org/Licenses/.
+
+A small number of files (the API header files listed in
+R_DOC_DIR/COPYRIGHTS) are distributed under the
+Lesser GNU General Public LIcense version 2.1.
+This can be displayed by RShowDoc("COPYING.LIB"),
+or obtained at the URI given.
+
+'Share and Enjoy.'
+
+
+Open output
+ID0000001M: Done testing as child
+ID0000005M: Done testing as child
+ID0000007M: Done testing as child
+ID0000003M: Done testing as child
+ID0000006M: Done testing as child
+ID0000009M: Done testing as child
+ID0000002M: Done testing as child
+ID0000008M: Done testing as child
+ID0000004M: Done testing as child
+Finished distribution based clustering: 6-11-2013 20:2:1

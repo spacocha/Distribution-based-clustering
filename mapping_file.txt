@@ -1,0 +1,4 @@
+#SampleID	BarcodeSequence	LinkerPrimerSequence	Replicate	Description
+H10.mix7	GTACGTT	YRYRGTGCCAGCMGCCGCGGTAA	1	Sarah H10, plate 63umP3
+H11.mix8	AGTAGAT	YRYRGTGCCAGCMGCCGCGGTAA	1	Sarah H11, plate 63umP3
+H12.mix9	TCATTAA	YRYRGTGCCAGCMGCCGCGGTAA	1	Sarah H12, plate 63umP3

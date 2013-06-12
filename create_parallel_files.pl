@@ -3,6 +3,8 @@
 #	Use this program as part of the eOTU pipeline
 #
 
+$programname="create_parallel_files.pl";
+
 	die "Input the following:
 full_list- file name of the complete OTU list
 fasta- full fasta file with sequences and names that match those in the list
@@ -11,13 +13,13 @@ output_prefix- what the output files will begin with
 Usage: full_list full_fasta full_mat UNIQUE AFTER\n" unless (@ARGV);
 	
 	chomp (@ARGV);
-	($full_list,  $fullfasta, $fullmat, $BEFORE, $AFTER) = (@ARGV);
-die "list_through_filter_from_mat.pl: Please follow the command line arguments\n" unless ($AFTER);
+	($full_list,  $fullfasta, $fullmat, $UNIQUE, $AFTER) = (@ARGV);
+die "$programname: Please follow the command line arguments\n" unless ($AFTER);
 
 chomp ($full_list);
 chomp ($fullfasta);
 chomp ($fullmat);
-chomp ($BEFORE);
+chomp ($UNIQUE);
 chomp ($AFTER);
 
 #read in the list file and capture the OTU on the right line according to the lineno
@@ -27,9 +29,9 @@ while ($line1 = <IN>){
     chomp ($line1);
     $curline++;
     $allotunum{$curline}++;
-    $checkmatfile="${BEFORE}.${curline}.${AFTER}.mat";
+    $checkmatfile="${UNIQUE}.${curline}.${AFTER}.mat";
     die "Please provide a unique name. ${checkmatfile} exists\n" if (-e ${checkmatfile});
-    $checkfafile="${BEFORE}.${curline}.${AFTER}.fa";
+    $checkfafile="${UNIQUE}.${curline}.${AFTER}.fa";
     die "Please provide a unique name. ${checkfafile} exists\n" if (-e ${checkfafile});
 
     (@pieces) = split ("\t", $line1);
@@ -62,7 +64,7 @@ while ($line1 = <IN>){
     #store sequence infor for later processing
     if ($otuhash{$info}){
 	($otunum)=$otuhash{$info};
-	open (FA, ">>${BEFORE}.${otunum}.${AFTER}.fa") or die "Can't open ${BEFORE}.${otunum}.${AFTER}.fa";
+	open (FA, ">>${UNIQUE}.${otunum}.${AFTER}.fa") or die "Can't open ${UNIQUE}.${otunum}.${AFTER}.fa";
 	print FA ">$info\n$sequence\n";
 	close (FA);
     }
@@ -83,7 +85,7 @@ while ($line=<IN>){
 	#print the data to the filehandle associated with each on
 	($num)=$otuhash{$first};
 	if ($num){
-	    open (MAT, ">>${BEFORE}.${num}.${AFTER}.mat") or die "Can't open ${BEFORE}.${num}.${AFTER}.mat\n";
+	    open (MAT, ">>${UNIQUE}.${num}.${AFTER}.mat") or die "Can't open ${UNIQUE}.${num}.${AFTER}.mat\n";
 	    print MAT "$first";
 	    foreach $piece (@pieces){
 		print MAT "\t$piece";
@@ -93,7 +95,7 @@ while ($line=<IN>){
 	}
     } else {
 	foreach $num (keys %allotunum){
-	    open (MAT, ">>${BEFORE}.${num}.${AFTER}.mat") or die "Can't open ${BEFORE}.${num}.${AFTER}.mat\n";
+	    open (MAT, ">>${UNIQUE}.${num}.${AFTER}.mat") or die "Can't open ${UNIQUE}.${num}.${AFTER}.mat\n";
 	    print MAT "$first";
 	    foreach $piece (@pieces){
 		print MAT "\t$piece";

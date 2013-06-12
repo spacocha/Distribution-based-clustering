@@ -17,13 +17,93 @@ perl (v5.8.8, other versions unverified)
 
 R (2.12.1, others unverified)
 
-PIPELINE DEPENDENCIES:
+PIPELINE DEPENDENCIES, although other similar programs can be used which accomplish the same thing:
 
-uclust (1.2.22, others unverified)
+QIIME (1.3.0, others unverified) or mothur (v.1.31.1, others unverified) for pre-processing raw fastq data
 
-mothur (v.1.31.1, others unverified)
+uclust (1.2.22, others unverified) for Progressive clustering for parallel processing
 
-FastTree (2.1.3, others unverified)
+mothur (v.1.31.1, others unverified) for alignments
+
+FastTree (2.1.3, others unverified) for distances
+
+uchime (1.23.1, others unverified) for cleaning up chimeras
+
+PRE_PROCESSING SEQUENCE DATA FROM RAW FASTQ:
+
+Raw sequencing data can be generated in various ways. This will outline our method using qiime and mothur to process raw fastq data from Illumina for used with distribution-based clustering.
+
+You can use our pipeline to process fastq data (if it helps), or just make a fasta file in any manner you see fit from raw data. Our steps include quality filtering, removing primer sequences and trimming sequences to the same length. These steps may not all be necessary for your specific data. It also doesn't include overlapping or paired end reads.
+
+OUT PIPELINE
+
+1.) Create a trimmed, quality filtered file, formatted in the QIIME split_libraries_fastq.py format. The library name is the first entry in the header field, followed by "_" and a unique number (e.g. lib1_1 ) followed by a space with the header name from the fastq file (e.g. ">lib1_1 MISEQ578:1:1101:15644:2126#AATGTCAA/1 orig_bc=TTGACATT new_bc=TTGACATT bc_diffs=0"). Library names can not have any spaces, and as a general rule, it is safe to only include "." as the only non-alpha numeric characters. We generate these files with the following commands from a fastq file in the format ./test_data/raw_data.fastq. From within the downloaded folder (Distribution-based-clustering-master), make an output folder so all of the result will be found in the same place. This corresponds to the field UNIQUE=./output_dir/unique in ./all_variables
+For example, this can be done with:
+
+    mkdir output_dir
+
+Now, processes the raw fastq with qiime using the shell:
+
+    ./RunQiime_rawdata.csh ./all_variables
+
+This will create a folder ./output_dir/unique_output with the results. Specifically, the file seqs.trim.names.76.fa will be used for further analysis. Again, this type of file can be created in other ways, although the next program will not work unless the fasta is formatted with the library name as the first part of the header like this:
+>lib2_0 HWI-EAS413_0071_FC:2:1:2111:1182#GTACGTT/1 orig_bc=GTACGTT new_bc=GTACGTT bc_diffs=0
+TACGTAGGGTGCGAGCGTTAATCGGAATTACTGGGCGTAAAGCGTGCGCAGGCGGTTTTGTAAGTCAGATGTGAAA
+
+2.) Progressively cluster sequences with USEARCH into 90% identity clusters. The results of this will be a list of sequences within 90% identity clusters, and the full fasta and sequence by library matrix used for downstream analysis.
+
+    ./ProgressiveClustering_USEARCH.csh ./all_variables
+
+The results of this is a list of sequences clustered by sequence similarity. Each line is a group (in this case 90% OTUs) which will be clustered with ditribution-based-clustering.pl independently from seqeunces on different lines. Each group (i.e. line) contains the names of the seqeunces (de-replicated so only one instance of the same sequence is represented) tab delimited. In this example, there is only one group, and there are 9 different unique sequences to be clustered.
+
+RUNNING DISTRIBUTION-BASED CLUSTERING IN PARALLEL:
+
+Commonly, this program will be run in parallel on datasets that are fairly large. This section provides a quick-start guide to help you accomplish parallel clustering beginning from data that is de-replicated and has an associated sequence by library count matrix associated with it. For further information about how to get to this point, see "PRE_PROCESSING SEQUENCE DATA FROM RAW FASTQ" above.
+
+1.) Create the files for processing in parallel using the output of the ProgressiveClustering_USEARCH.csh (Don't need to run this if you are using eOTU_parallel.csh)
+
+    perl create_parallel_files.pl ./output_dir/unique.PC.final.list ./output_dir/unique.fa ./output_dir/unique.f0.mat ./output_dir/unique process.f0
+
+This will create one fasta and one sequence by library matrix file for each line of the unique_final.list. These can be used in parallel to process the data. In the example, there is only one group (i.e. one line in the list) so there is only one set of files (unique.1.process.f0.fa and unique.1.process.f0.mat).
+
+2.) [Parallel] Align sequences to a reference and create the distance matrix. Then use these as input to the distribution_clustering.pl. For the parallel process, replace /output_dir/unique.1.process.f0.fa with /output_dir/unique.{JOB_NO}.process.* for all commands below:
+
+    mothur "#align.seqs(fasta=./output_dir/unique.1.process.f0.fa, reference=./accessory_files/new_silva_short_unique_1_149.fa)"
+    
+    FastTree -nt -makematrix ./output_dir/unique.1.process.f0.align > ./output_dir/unique.1.process.f0.align.dst
+
+    FastTree -nt -makematrix ./output_dir/unique.1.process.f0.fa > ./output_dir/unique.1.process.f0.unalign.dst
+
+    perl distribution_clustering.pl -m ./output_dir/unique.1.process.f0.mat -d ./output_dir/unique.1.process.f0.align.dst,./output_dir/unique.1.process.f0.unalign.dst -out output_dir/unique.1.process.f0
+
+The results of this will be ./output_dir/unique.1.process.f0.err which is the results of the clustering output and ./output_dir/unique.1.process.f0.log. It is important that the last line of ./output_dir/unique.1.process.f0.err says "Finished distribution based clustering" and that there are no warnings (will be uppercase "WARNING:" followed by the specific problem) in the ./output_dir/unique.1.process.f0.log file (the "Warning message: In chisq.test(x) :Chi-squared approximation may be incorrect" is ok). That can be checked automatically with the program below.
+
+3.) Evaluate whether all parallel processes completed. This will check for all completed processes and look for the WARNINGs stateed above.
+
+    perl evaluate_parallel_results.pl ./all_variables eval_output
+
+The results will be in ./eval_output.log. This should say all files were created and all files were finished. If they were not done, you can re-do the distribution_clustering.pl command as before but add -old at the end. This will continue with the process where it left off.
+
+    perl distribution_clustering.pl -m ./output_dir/unique.1.process.f0.mat -d ./output_dir/unique.1.process.f0.align.dst,./output_dir/unique.1.process.f0.unalign.dst -out output_dir/unique.1.process.f0 -old
+
+4.) Re-run failed jobs by using the -old flag in distribution_clustering.pl for each failed process. This will continue where the program left off.
+
+    perl distribution_clustering.pl -m ./output_dir/unique.1.process.f0.mat -d ./output_dir/unique.1.process.f0.align.dst,./output_dir/unique.1.process.f0.unalign.dst -out output_dir/unique.1.process.f0 -old
+
+Re-do step 3 after this to make sure the problem was fixed
+
+5.) Make the final files. This involves creating a list from error files, a mat file from the list, and a fasta from the mat. (You can use clean_up_parallel_ultra.csh to remove OTUs that do not match the full length of the 16S region and chimeric sequences or do this seperately)
+
+    ./clean_up_parallel_ultra.csh ./variables_file 
+
+The final clustered results will be in the files
+fasta of OTU representatives- ./output_dir/unique.final.fa
+OTU_table in tab form- ./output_dir/unique.final.mat
+
+The above lists our pipeline for processing raw fastq data. However, many of the steps can be replaced with different equivelent programs and our pipeline isn't required to run the clustering algorithm. Below outlines just the information needed to run the clustering algorithm with different types of inputs
+
+
+DISTRIBUTION-BASED CLUSTERING ALGORITHM-
 
 REQUIRED INPUTS:
 
@@ -35,8 +115,6 @@ This program requires that raw sequencing data is pre-processed into two files
 
 - A pairwise distance matrix must be created for all unique sequences and presented as a .dst file.
 
-- For large sequence files, such as those from Illumina or 454 pyrosequencing, FastTree is recommended.
-
 - Also, both aligned and unaligned distances can be entered use as inputs, reducing the error from misalignment.
 
 2.) Community-by-sequence matrix
@@ -46,41 +124,6 @@ This program requires that raw sequencing data is pre-processed into two files
 - Communities are columns and OTUs are rows
 
 - Lines beginning with "# " (hash followed by a space) are ignored
-
-RUNNING DISTRIBUTION-BASED CLUSTERING IN PARALLEL:
-
-Commonly, this program will be run in parallel on datasets that are fairly large. This section provides a quick-start guide to help you accomplish parallel clustering beginning from data that is de-replicated and has an associated sequence by library count matrix associated with it. For further information about how to get to this point, see "PRE_PROCESSING SEQUENCE DATA FROM RAW FASTQ" below.
-
-1.) Progressively cluster data using ProgressiveClustering.csh. variables_file contains many of the variables needed by various programs. The comments are meant walk you through what you need to input. Check the test_data for examples of each file.
-
-    ProgressiveClustering5.csh ./variables_file
-
-2.) Create the files for processing in parallel using the output of the ProgressiveClustering.csh
-
-    perl create_parallel_files.pl unique_final.list unique.fa unique.f0.mat parallel_output
-
-This will create one fasta and one sequence by library matrix file for each line of the unique_final.list. These can be used in parallel to process the data
-
-3.) [Parallel] Align sequences to a reference and create the distance matrix. Then use these as input to the distribution_clustering.pl. Both steps 2 and 3 are contained in eOTU_parallel.csh.
-
-    mothur "#align.seqs(fasta=parallel_output.1.fa, reference=new_silva_short_unique_1_151.fa)"
-    
-    FastTree -nt -makematrix parallel_output.1.align > parallel_output.1.align.dst
-
-    FastTree -nt -makematrix parallel_output.1.fa > parallel_output.1.unalign.dst
-
-    perl distribution_clustering.pl -m parallel_output.1.mat -d parallel_output.1.align.dst,parallel_output.1.unalign.dst -out parallel_output.1.process
-
-4.) Evaluate whether all parallel processes completed.
-
-    perl evaluate_parallel_results.pl ./variables_file eval_output
-
-5.) Re-run failed jobs by using the -old flag in distribution_clustering.pl for each failed process. This will continue where the program left off.
-
-6.) Make the final files. This involves creating a list from error files, a mat file from the list, and a fasta from the mat. (You can use clean_up_parallel_ultra.csh to remove OTUs that do not match the full length of the 16S region and chimeric sequences or do this seperately)
-
-    clean_up_parallel.csh ./variables_file
-
 
 MAIN PROGRAM:
 
@@ -92,7 +135,7 @@ distribution_clustering.pl
 
 REQUIRED ACCESSORY PROGRAMS:
 
-Evaluate_parallel_results.pl
+evaluate_parallel_results.pl
 
 - Use this program when running the data in parallel
 
@@ -117,53 +160,22 @@ Files presented in the "test_data" directory can be used either as test data to 
 
 - test_data.mapping is the mapping file for QIIME or test_data.mothur.mapping for mothur
 
-- oligos.tab is required for filtering out primer/adapters from sequencing construct if not using mothur to de-multiples
+- ./accessory_files/oligos.tab is required for filtering out primer/adapters from sequencing construct if not using mothur to de-multiples
 
-- new_silva_short_unique_1_151.fa is a reference alignment trimmed to the size of the construct. 
-
-PRE_PROCESSING SEQUENCE DATA FROM RAW FASTQ:
-
-Raw sequencing data can be generated in various ways. This will outline a simple method using mothur to process raw fastq data from Illumina for used with distribution-based clustering.
-
-OUR PIPELINE
-
-You can use our pipeline to process fastq data. 
-
-1.) Create a trimmed, quality filtered file, formatted in the QIIME split_libraries_fastq.py format. The library name is the first entry in the header field, followed by "__ and a unique id (e.g. lib1_1 ) followed by a space with the header name from the fastq file (e.g. ">lib1_1 MISEQ578:1:1101:15644:2126#AATGTCAA/1 orig_bc=TTGACATT new_bc=TTGACATT bc_diffs=0"). Library names can not have any spaces, and as a general rule, it is safe to only include "." as the only non-alpha numeric characters. We generate these files with the following commands from a fastq file in the format ./test_data/raw_data.fastq
-
-    RunQiime_rawdata.csh ./all_variables
-    
-2.) Progressively cluster sequences with UCLUST into 90% identity clusters. The results of this will be a list of sequences within 90% identity clusters, and the full fasta and sequence by library matrix used for downstream analysis.
-
-    ProgressiveClustering5.csh ./all_varables
-    
-3.) Create the files to run in parallel
-
-    create_parallel_files.pl unique.PC.final.list unique.fa unique.f0.mat unique process.f0
-
-4.) Run all of the processes in parallel. This is an example of how it would be run on SGE
-
-    qsub -cwd -t 1-100 eOTU_parallel.csh ./all_variables
-
-5.) Evaluate the process
-
-    perl evaluate_parallel_results.pl ./all_variables eval_output
-
-6.) If all processes finished, clean them up
-
-    clean_up_parallel_ultra.csh ./all_variables
+- ./accessory_files/new_silva_short_unique_1_149.fa is a reference alignment trimmed to the size of the construct. 
 
 
 MOTHUR-COMPLETE (not parallel)
-You can use method to process the files, but this will likely have to be one round.
-Do not attempt with more than 10 million reads (likely needs fewer)
-mothur commands as follows:
+You can use method to process the files. Do not attempt this specific set of information with more than 1 million reads or so
+First make the output directory mothur_dir and move ./test_data/raw_data.fastq there.
+
+mothur commands as follows from within the mothur_dir:
 
     mothur > fastq.info(fastq=raw_data.fastq)
 
      - This will generate raw_data.fasta and raw_data.qual
 
-    mothur > trim.seqs(fasta=raw_data.fasta, oligos=oligos.tab, qfile=raw_data.qual, qthreshold=48, minlength=76, maxhomop=10)
+    mothur > trim.seqs(fasta=raw_data.fasta, oligos=../accessory_files/oligos.tab, qfile=raw_data.qual, qthreshold=48, minlength=76, maxhomop=10)
 
      - This will generate raw_data.trim.fasta, with low quality sequences filtered out. All sequences will be the same length
 
@@ -171,7 +183,7 @@ mothur commands as follows:
 
      - This will reduce redundant sequences and represent them as one "unique" sequences in raw_data.trim.unique.fasta
 
-    mothur > align.seqs(fasta=raw_data.trim.unique.fasta, reference=new_silva_short_unique_1_151.fa)
+    mothur > align.seqs(fasta=raw_data.trim.unique.fasta, reference=../accessory_files/new_silva_short_unique_1_149.fa)
 
      - align sequences to a referece alignment
 
@@ -179,7 +191,7 @@ mothur commands as follows:
 
      - creates the phylip formatted distance matrix (raw_data.trim.unique.square.dist), used in distribution_clustering.pl
 
-    mothur > count.seqs(name=raw_data.trim.names, group=raw_data.group)
+    mothur > count.seqs(name=raw_data.trim.names, group=../test_data/raw_data.group)
 
      - creates a community-by-sequence count matrix (raw_data.trim.seq.count) to be used as input to distribution-clustering.pl
 
@@ -202,9 +214,9 @@ In order to make the error files into either a list or a community-by-OTU matrix
 
     perl ../merge_parent_child.pl seq_error_only.err > seq_error_only.err.list
 
-    perl ../matrix_from_list.pl  raw_data.trim.seq.count seq_error_only.err.list > seq_error_only.err.list.mat
+    perl ../matrix_from_list.pl  raw_data.trim.seq.count seq_error_only.err.list eco > seq_error_only.err.list.mat
 
-These files can be used with other programs (mothur, Qiime) for commonly performed community analysis.
+Repeat for the microdiversity.err files. These files can be used with other programs (mothur, Qiime) for commonly performed community analysis.
 
 RESULTS:
 

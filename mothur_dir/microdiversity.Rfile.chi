@@ -1,0 +1,6 @@
+x <- read.table("microdiversity.Rfile.in", header = FALSE)
+htest2 <-chisq.test(x)
+chip <-htest2$p.value
+chiexp <-htest2$expected
+write.table(chip,file="microdiversity.Rfile.chip",sep="	",row.names=FALSE,col.names=FALSE)
+write.table(chiexp,file="microdiversity.Rfile.chiexp",sep="	",row.names=FALSE,col.names=FALSE)

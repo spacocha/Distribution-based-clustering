@@ -1,0 +1,6 @@
+x <- read.table("seq_error_only.Rfile.in", header = FALSE)
+htest2 <-chisq.test(x)
+chip <-htest2$p.value
+chiexp <-htest2$expected
+write.table(chip,file="seq_error_only.Rfile.chip",sep="	",row.names=FALSE,col.names=FALSE)
+write.table(chiexp,file="seq_error_only.Rfile.chiexp",sep="	",row.names=FALSE,col.names=FALSE)

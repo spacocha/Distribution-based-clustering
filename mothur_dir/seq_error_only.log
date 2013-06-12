@@ -1,0 +1,44 @@
+Running: find_seq_errors34.pl
+perl find_seq_errors34.pl -d raw_data.trim.unique.square.dist -m raw_data.trim.seq.count -out seq_error_only
+Time started: 6-11-2013 20:16:9
+Input:raw_data.trim.unique.square.dist
+Distributions:raw_data.trim.seq.count
+Routput:seq_error_only.Rfile
+Pvalue cutoff:0.0005
+Abundance cutoff:10
+Output:seq_error_only.err
+Old Stats:None
+Verbose:no
+Distance cutoff:0.1
+Type of distance matrix:Default: matrix
+Using all libraries in matrix file
+R license Info:
+
+This software is distributed under the terms of the GNU General
+Public License Version 2, June 1991.  The terms of this license
+are in a file called COPYING which you should have received with
+this software and which can be displayed by RShowDoc("COPYING").
+
+If you have not received a copy of this file, you can obtain one
+at http://www.R-project.org/Licenses/.
+
+A small number of files (the API header files listed in
+R_DOC_DIR/COPYRIGHTS) are distributed under the
+Lesser GNU General Public LIcense version 2.1.
+This can be displayed by RShowDoc("COPYING.LIB"),
+or obtained at the URI given.
+
+'Share and Enjoy.'
+
+
+Open output
+HWI-EAS413_0071_FC:2:1:2111:1182#GTACGTT/1: Done testing as child
+HWI-EAS413_0071_FC:2:1:7250:2720#GTACGTT/1: Done testing as child
+HWI-EAS413_0071_FC:2:1:7014:1558#AGTAGAT/1: Done testing as child
+HWI-EAS413_0071_FC:2:1:14612:9620#AGTAGAT/1: Done testing as child
+HWI-EAS413_0071_FC:2:3:16290:10047#GTACGTT/1: Done testing as child
+HWI-EAS413_0071_FC:2:2:19220:14621#AGTAGAT/1: Done testing as child
+HWI-EAS413_0071_FC:2:2:1655:6565#TCATTAA/1: Done testing as child
+HWI-EAS413_0071_FC:2:37:10604:17591#AGTAGAT/1: Done testing as child
+HWI-EAS413_0071_FC:2:37:15953:6400#AGTAGAT/1: Done testing as child
+Finished distribution based clustering: 6-11-2013 20:16:11

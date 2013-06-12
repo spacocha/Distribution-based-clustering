@@ -1,0 +1,6 @@
+x <- read.table("output_dir/unique.1.process.f0.Rfile.in", header = FALSE)
+htest2 <-chisq.test(x)
+chip <-htest2$p.value
+chiexp <-htest2$expected
+write.table(chip,file="output_dir/unique.1.process.f0.Rfile.chip",sep="	",row.names=FALSE,col.names=FALSE)
+write.table(chiexp,file="output_dir/unique.1.process.f0.Rfile.chiexp",sep="	",row.names=FALSE,col.names=FALSE)

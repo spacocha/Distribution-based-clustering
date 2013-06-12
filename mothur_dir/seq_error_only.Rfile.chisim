@@ -1,0 +1,4 @@
+x <- read.table("seq_error_only.Rfile.in", header = FALSE)
+htest3 <-chisq.test(x,simulate.p.value = TRUE, B = 10000)
+chisimp <-htest3$p.value
+write.table(chisimp,file="seq_error_only.Rfile.chisimp",sep="	",row.names=FALSE,col.names=FALSE)

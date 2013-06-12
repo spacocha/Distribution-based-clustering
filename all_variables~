@@ -1,0 +1,116 @@
+#UNIVERSAL VARIABLES
+#where the programs are called from
+#use the following unless otherwise appropriate
+BIN=./bin
+
+#unique prefix for your analysis
+# it can not be a folder name only
+# it can include a path which exists where you want to put it.
+#example of what I want: /scratch/spacocha/tmp/unique
+UNIQUE=./output_dir/unique
+
+#filter out the low abundance seqeunces because they don't have statistical power
+#this will increase the speed of the error calling program
+#consider how many sequences you will need to find statistical power across your sample
+#0 and 1 are the same, since it keeps things that are less than or equal to the number
+# if you want to remove singletons use 2
+FNUMBER=0
+
+#RUNQIIME_RAWDATA variables
+#define your file paths
+#where is the fastq file you want to process
+SOLFILEF=./test_data/raw_data.fastq
+
+#What is the name of your barcode or indexing read file to be used with QIIME's split_libraries_fastq.py
+BARFILE=./test_data/test_data.barfile
+
+#Where it the assoicated mapping file
+MAPFILE=./test_data/test_data.mapping
+
+#the oligo file
+OLIGO=./accessory_files/oligos.tab
+
+#last_bar_character for quality for filtering
+#use Q unless there is reason to use otherwise
+QUAL=Q
+
+#max_bad_run_length
+#use 0 unless there is a reason to use otherwise
+BADRUN=0
+
+#min_per_read_length variable of QIIME split_libraries_fastq.py
+#use the full length of your read unless this filters too many sequences
+MINLEN=99
+
+#how long is your barcode?
+BARLEN=7
+
+#Any other split_libraries_fastq.py variables
+#such as to reverse_comp barcode or sequence
+SLV=
+
+#the length of the primers that are removed in trim.seqs
+PRILEN=23
+
+#EOTU_parallel specific variables
+#the forward reference seqeunce to align to
+#this is ok only for 76 bps in length from the end of the U515 primer
+#remake this file from the silva alignment following the mothur protocol for trimming an alignment to specific lengths
+#you can use pcr.seqs with start and stop, or trim.seqs and possibly filter.seqs as well
+FALIGN=./accessory_files/new_silva_short_unique_1_149.fa
+
+#file with 2 columns, first with the unique library name as in mapping file
+#second column with a new lib name, use the same name in the second column to merge replicates
+#this field can be blank if you don't want to use a different name for each lib
+COMBREPS=
+
+#the variable string you want to include with the error program
+VARSTRING="-verbose -JS 0.08"
+
+#DISTRIBUTION-CLUSTERING VARIABLES
+#Include a sequence cutoff distance filter
+# must range from 0 -1 with 0.2 being a good cut-off for 0.90 clustering
+#this is different from the ProgressiveClustering, but can be made to be similar
+#this is a distance, ProgressiveClustering UPPER and LOWER are percent identity
+CUTOFF=0.1
+
+#MAKE_IT_GO specific variables
+#The program you want to use as the eOTU cluster
+EOTUFILE=/data/spacocha/bin/methods_scripts/eOTU_parallel.csh
+RESUBFILE=/data/spacocha/bin/methods_scripts/eOTU_resubmit.csh
+
+#The number of things you want to submit to the cluster
+QSUBNO=99
+
+#the name of the error program
+ERRORPROGRAM=find_seq_errors34.pl
+
+#The clustering program that you want to use
+PCLUST=/data/spacocha/bin/ProgressiveClustering5.csh
+
+
+#PROGRESSIVE CLUSTERING VARIABLES
+TRIM=`expr $MINLEN - $PRILEN`
+#The file that was cleaned and done with RunQiime_rawdata.csh
+QIIMEFILE=${UNIQUE}_output/seqs.trim.names.${TRIM}.fa
+#The upper starting point for progressive clustering
+#should be a percent id (i.e. 99 or 98)
+UPPER=98
+
+#Thi lower limit of the clustering
+#should be a percent id (i.e. 92 or 90)
+LOWER=90
+
+#EVALUATE_RESULTS varables
+
+#what is after the process number that was put into the distribution-based clustering algorithm
+#this should include periods, but not the .err or .log which was added by the program
+AFTER=process.f0
+
+#CLEAN_PARALLEL_PROCESSES variables
+#the start and stop positions of your filter
+ALIGNSTART=1
+
+ALIGNEND=149
+
+

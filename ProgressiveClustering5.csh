@@ -2,8 +2,6 @@
 #$ -S /bin/bash
 # -cwd
 
-source /etc/profile.d/modules.sh
-module load qiime-default
 . $1
 
 echo "${QIIMEFILE}\n";
@@ -17,7 +15,7 @@ perl ${BIN}/OTU2lib_count_trans1.pl ${UNIQUE}.trans ${FNUMBER} > ${UNIQUE}.f${FN
 perl ${BIN}/fasta2uchime_2.pl ${UNIQUE}.f${FNUMBER}.mat ${UNIQUE}.fa > ${UNIQUE}.ab.fa
 
 #progressively cluster the first value
-uclust --input ${UNIQUE}.ab.fa --id 0.${UPPER} --uc ${UNIQUE}.${UPPER}.uc --maxrejects 500 --maxaccepts 20
+usearch -cluster_fast ${UNIQUE}.ab.fa --id 0.${UPPER} --uc ${UNIQUE}.${UPPER}.uc
 
 uclust --input ${UNIQUE}.ab.fa --uc2fasta ${UNIQUE}.${UPPER}.uc  --output ${UNIQUE}.${UPPER}.fa --types S
 

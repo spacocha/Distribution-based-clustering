@@ -1,0 +1,20 @@
+Input file paths
+Mapping filepath: ./test_data/test_data.mapping (md5: d4a6bbfea349c13c8a5b576d4d4bf30f)
+Sequence read filepath: ./test_data/raw_data.fastq (md5: 877f9a178703de72bc991d206b1783a7)
+Barcode read filepath: ./test_data/test_data.barfile (md5: 318e1e1170ccb60a164fee9f85ae2a96)
+
+Quality filter results
+Total number of input sequences: 35295
+Barcode not in mapping file: 0
+Read too short after quality truncation: 4827
+Count of N characters exceeds limit: 0
+Illumina quality digit = 0: 0
+Barcode errors exceed max: 0
+
+Result summary (after quality filtering)
+Median sequence length: 99.00
+lib1	11585
+lib3	10888
+lib2	7995
+---
+

@@ -1,4 +1,4 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl
 #   Edited on 08/16/12 
 #
 $programname="find_seq_errors34.pl";

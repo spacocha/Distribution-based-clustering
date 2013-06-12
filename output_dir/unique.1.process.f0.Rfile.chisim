@@ -1,0 +1,4 @@
+x <- read.table("output_dir/unique.1.process.f0.Rfile.in", header = FALSE)
+htest3 <-chisq.test(x,simulate.p.value = TRUE, B = 10000)
+chisimp <-htest3$p.value
+write.table(chisimp,file="output_dir/unique.1.process.f0.Rfile.chisimp",sep="	",row.names=FALSE,col.names=FALSE)

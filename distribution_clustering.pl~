@@ -53,8 +53,9 @@ until ($i >= $j){
 
 #Terminate program if essential flags are not provided
 die "Please follow command line args for $programname
+Distance: ${distfiles}
 Output: ${out}
-Matfile: ${matfile}\n" unless ($out && $matfile);
+Matfile: ${matfile}\n" unless ($out && $matfile && $distfiles);
 
 $Rfile="${out}".".Rfile";
 $output="${out}".".err";
@@ -256,24 +257,17 @@ Distfile\n";
 #now parse the distance files
 if ($usedist){
     print LOG "Reading in dist files: $distfiles\n" if ($verbose);
-    (@distarray)=split (",", $distfiles);
-    foreach $file (@distarray){
+    (@distfilearray)=split (",", $distfiles);
+    foreach $file (@distfilearray){
 	print LOG "Reading in dist file: $file\n" if ($verbose);
-	if ($dsttype eq "pair"){
-	    #don't make transhash
-	    $answer="Finished";
+	if ($dsttype){
+	    if ($dsttype eq "pair"){
+		($answer)=dst2tabpair ($file);
+	    } else {
+		die "$programname error: does not support this dsttype $dsttype\n";
+	    }
 	} else {
-	    ($answer)=dst2transhash ($file);
-	}
-	die "Didn't finish transhash\n" unless ($answer eq "Finished");
-    }
-
-    foreach $file (@distarray){
-	print LOG "Reading in dist file: $file\n" if ($verbose);
-	if ($dsttype eq "pair"){
-	    ($answer)=dst2tabpair ($file);
-	} else {
-	    ($answer)=dst2tab ($file);
+	    ($answer)=dst2array ($file);
 	}
 	die "Didn't finish distance\n" unless ($answer eq "Finished");
     }
@@ -323,7 +317,15 @@ foreach $oid (sort {$abundhash{$b} <=> $abundhash{$a}} keys %abundhash){
     }
     #look for possible parents either with distance or with parenthash
     if ($usedist){
+	#first, make the disthash for this id
+	#clear out any old values
+	%disthash=();
+	%gotdisthash=();
+	#make the disthash
+	($answer)= makedisthash();
+	die "$programname error: Missing disthash\n" unless ($answer eq "Finished");
 	foreach $id (sort {$disthash{$oid}{$a} <=> $disthash{$oid}{$b}} keys %{$disthash{$oid}}){
+	    next if ($id eq $oid);
 	    $result=();
 	    ($result)=finish_loop();
 	    if ($result){
@@ -390,7 +392,7 @@ close (LOG);
 
 sub finish_loop{
     #only change to something than or equal to current abundance
-    print LOG "$id is the next closest possible parent of $oid\n" if ($verbose);
+    print LOG "$id is the next closest possible parent of $oid $disthash{$oid}{$id}\n" if ($verbose);
     #only evaluate things that have a distance in the file (some files are too long to keep all pairs)
     if ($mergeall){
 	unless ($oid eq $allparent){
@@ -601,7 +603,7 @@ sub finish_loop{
 }
     
 
-sub dst2transhash {
+sub dst2array {
     my ($file) = (@_);
     my ($line);
     my (@pieces);
@@ -610,59 +612,22 @@ sub dst2transhash {
     $k=0;
     open (IN, "<$file") or die "Can't open $file\n";
     print LOG "Opened $file\n" if ($verbose);
+    $ind=0;
     while ($line=<IN>){
         chomp ($line);
         (@pieces) = split (" ", $line);
-        if ($pieces[0] =~/[A-z]/){
-            ($isolate) = shift (@pieces);
-            $translatehash2{$file}{$k}=$isolate;
-            $k++;
-        }
+	$j=@pieces;
+	next unless ($j>1);
+	($isolate)=shift(@pieces);
+	$isoindhash{$file}{$isolate}=$ind;
+	$indisohash{$file}{$ind}=$isolate;
+	#get only the lower half of the matrix
+	#check to see if these values exist already
+	$ind++;
     }
     close (IN);
     $result= "Finished";
 
-}
-
-sub dst2tab {
-    my ($file) = (@_);
-    my ($line);
-    my (@pieces);
-    my ($isolate);
-    chomp ($file);
-    $k=0;
-    open (IN, "<$file") or die "Can't open $file\n";
-    print LOG "Opened $file\n" if ($verbose);
-    while ($line=<IN>){
-	chomp ($line);
-	(@pieces) = split (" ", $line);
-	if ($pieces[0] =~/[A-z]/){
-	    ($isolate) = shift (@pieces);
-	    $j=0;
-	    $k++;
-	    foreach $distance (@pieces){
-		#get the name of the other isolate
-		$otheriso=$translatehash2{$file}{$j};
-		#other iso are possible parents, only record for otherisos that satisfy criteria
-		if ($isolate ne $otheriso &&  $distance < $distcutoff && ${abundhash{$isolate}} <= $abundhash{$otheriso}){
-		    if ($disthash{$isolate}{$otheriso}){
-			if ($distance < $disthash{$isolate}{$otheriso}){
-			    #only keep the lowest distance
-			    $disthash{$isolate}{$otheriso}=$distance;
-			}
-		    } else {
-			$disthash{$isolate}{$otheriso}=$distance;
-		    }
-		} else {
-		    #don't record the distance of anything that is not a possible parent of $isolate
-		}
-		$j++;
-	    }   
-	}
-    }
-    close (IN);
-    $result= "Finished";
-    return ($result);
 }
 
 sub dst2tabpair {
@@ -749,13 +714,13 @@ A child is assigned to the most similar (smallest distance) parental sequence th
 Once assigned as a child, a sequence will not be considered as a parent.
 
 Example usage:
-perl $programname -d file.dst -m file.mat -R R_file -out output.err -log file.log
+perl $programname -d file.dst -m file.mat -R R_file -out output
 
 Options:
-    -d distance_file          A distance file, or list of distance files (i.e. aligned and unaligned) separated by commas (optional)
+    -d distance_file          A distance file, or list of distance files (i.e. aligned and unaligned) separated by commas (required)
     -m matrix_file            The distribition of this sequence (a.k.a. 100% identity cluster) across your libraries (required)
     -out                      The output prefix which will be used to create output files. Output files include: .err, .log, .Rfile* (required)
-    -old old_err_files        Old stats file or list of old stats files separates by commas. The program will resume where it left off from previous runs. (optional)
+    -old                      The program will resume where it left off from previous runs. Output and log files need to be present (optional)
     -dist DIST_CUTOFF         The distance cutoff that you would consider merging sequences to (default is 0.1) (optional)
     -abund ABUND_CUTOFF       The abundance cutoff that a parent has to satisfy to be considered. (optional)
                               0 if you want to merge uninformative sequence diversity but take longer, 10 increases speed but detects many methodological errors (sequencing, PCR)
@@ -837,7 +802,7 @@ sub JS_value {
 	    #sum of all JS2s
 	    $JS2+=$sum4;
 	}
-	print LOG "$one\t$p\t$total1\t$mathash{$one}{$header}\t$JS1\t$two\t$q\t$total2\t$mathash{$two}{$header}\t$JS2\n" if ($verbose);
+#	print LOG "$one\t$p\t$total1\t$mathash{$one}{$header}\t$JS1\t$two\t$q\t$total2\t$mathash{$two}{$header}\t$JS2\n" if ($verbose);
     }
     $newJS=($JS1 + $JS2)/2;
     return ($newJS);
@@ -904,3 +869,43 @@ write.table(j,file=\"${Rfile}.corv\",sep=\"\t\",row.names=FALSE,col.names=FALSE)
 
 }
 
+sub makedisthash {
+    foreach $dfile (@distfilearray){
+	($ind)=$isoindhash{$dfile}{$oid};
+	$linecount=0;
+	open (IN, "<$dfile") or die "Can't open $dfile\n";
+	while ($dline=<IN>){
+	    chomp ($dline);
+	    next unless ($dline);
+	    (@pieces)=split (" ", $dline);
+	    $j=@pieces;
+	    next unless ($j>1);
+	    if ($ind==$linecount){
+		($info)=shift(@pieces);
+		die "$programname error: $info doesn't equal $oid\n" unless ($info eq $oid);
+		$newi=0;
+		$newj=@pieces;
+		until ($newi >=$newj){
+		    if ($gotdisthash{$oid}{$indisohash{$dfile}{$newi}}){
+			if ($pieces[$newi] < $disthash{$oid}{$indisohash{$dfile}{$newi}}){
+			    $disthash{$oid}{$indisohash{$dfile}{$newi}}=$pieces[$newi];
+			}
+		    } else {
+			#the values were not recorded yet
+			if ($pieces[$newi] < $distcutoff && $abundhash{$oid} <= $abundhash{$indisohash{$dfile}{$newi}}){
+			    $disthash{$oid}{$indisohash{$dfile}{$newi}}=$pieces[$newi];
+			    $gotdisthash{$oid}{$indisohash{$dfile}{$newi}}=1;
+			}
+		    }
+		    $newi++;
+		}
+		last;
+	    }
+	    $linecount++;
+	}
+	close (IN);
+		    
+    }
+    $result="Finished";
+    return ($result);
+}

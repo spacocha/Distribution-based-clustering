@@ -110,7 +110,7 @@ Re-do step 3 after this to make sure the problem was fixed
 
 5.) Make the final files. This involves creating a list from error files, a mat file from the list, and a fasta from the mat. (You can use clean_up_parallel_ultra.csh to remove OTUs that do not match the full length of the 16S region and chimeric sequences or do this seperately)
 
-    ./clean_up_parallel_ultra.csh ./variables_file 
+    ./clean_up_parallel_ultra.csh ./all_variables
 
 The final clustered results will be in the files
 fasta of OTU representatives- ./output_dir/unique.final.fa

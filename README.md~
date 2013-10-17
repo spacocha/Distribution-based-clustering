@@ -2,6 +2,16 @@ Distribution-based-clustering
 =============================
 Created by Sarah Pacocha Preheim
 
+OUTLINE:
+
+This README.md is divided into three different sections as follows:
+I. Introduction to the method
+II. Running Distribution-based clustering in parallel
+III. Running Distribution-based clustering without parallelization
+
+
+
+I. Introduction to the method
 DESCRIPTION:
 
 Extremely accurate algorithm used to group DNA sequences from microbial communities into operational taxonomic units (proxy for species) for ecological or biomedical research. This algorithm uses the information contained in the distribution of DNA sequences across samples along with sequence similarity to cluster sequences more accurately than other methods that are currently available. Developed for Illumina next-generation sequencing libraries, but applicable to any sequencing platform with sufficient number of counts per sample to infer distribution patterns. 
@@ -35,7 +45,13 @@ Raw sequencing data can be generated in various ways. This will outline our meth
 
 You can use our pipeline to process fastq data (if it helps), or just make a fasta file in any manner you see fit from raw data. Our steps include quality filtering, removing primer sequences and trimming sequences to the same length. These steps may not all be necessary for your specific data. It also doesn't include overlapping or paired end reads.
 
-OUT PIPELINE
+II. Running Distribution-based clustering in parallel
+
+Use the following outline as a guide to running data through distribution-based clustering in parallel. For any typical Illumina dataset, you will need to use a method that divides up the process of making OTUs with distribution-based clustering. The memory requirements would be too large to run a typical dataset through distribution-based clustering as a whole. So the following steps outline how the dataset can be divided with very little loss of accuracy to be processed faster and with less mempry demand.
+
+Many of the shell scripts (*.csh) are collections of commands calling other programs (such as mothur or FastTree etc) and can be altered to suit the needs of the user. The shell scripts are provided as guides to help identify all of the steps necessary to process Illumina data with distribution-based culstering. It is divided into two sections, PARALLEL PRE-PROCESSING STEPS which include many shell scripts and steps that are used to process the data for use with distribution-based clustering, and RUNNING DISTRIBUTION-BASED CLUSTERING IN PARALLEL, which actually runs the algorithm to make OTUs.
+
+PARALLEL PRE-PROCESSING STEPS-
 
 1.) Create a trimmed, quality filtered file, formatted in the QIIME split_libraries_fastq.py format. The library name is the first entry in the header field, followed by "_" and a unique number (e.g. lib1_1 ) followed by a space with the header name from the fastq file (e.g. ">lib1_1 MISEQ578:1:1101:15644:2126#AATGTCAA/1 orig_bc=TTGACATT new_bc=TTGACATT bc_diffs=0"). Library names can not have any spaces, and as a general rule, it is safe to only include "." as the only non-alpha numeric characters. We generate these files with the following commands from a fastq file in the format ./test_data/raw_data.fastq. From within the downloaded folder (Distribution-based-clustering-master), make an output folder so all of the result will be found in the same place. This corresponds to the field UNIQUE=./output_dir/unique in ./all_variables
 For example, this can be done with:
@@ -58,7 +74,7 @@ The results of this is a list of sequences clustered by sequence similarity. Eac
 
 RUNNING DISTRIBUTION-BASED CLUSTERING IN PARALLEL:
 
-Commonly, this program will be run in parallel on datasets that are fairly large. This section provides a quick-start guide to help you accomplish parallel clustering beginning from data that is de-replicated and has an associated sequence by library count matrix associated with it. For further information about how to get to this point, see "PRE_PROCESSING SEQUENCE DATA FROM RAW FASTQ" above.
+Commonly, this program will be run in parallel on datasets that are fairly large. This section describes how to process sequences in parallel, beginning from data that is de-replicated and has an associated sequence by library count matrix associated with it.
 
 1.) Create the files for processing in parallel using the output of the ProgressiveClustering_USEARCH.csh (Don't need to run this if you are using eOTU_parallel.csh)
 
@@ -103,6 +119,10 @@ OTU_table in tab form- ./output_dir/unique.final.mat
 The above lists our pipeline for processing raw fastq data. However, many of the steps can be replaced with different equivelent programs and our pipeline isn't required to run the clustering algorithm. Below outlines just the information needed to run the clustering algorithm with different types of inputs
 
 
+III. Running Distribution-based clustering without parallelization
+
+This section describes in more detail how to run one instance of distribution-based clustering. Typical datasets will not work running in this manner because of the size of the dataset and the memory required to process all of the sequences. However, it is an alternative method for very small dataset, including a way to use mothur to pre-process the samples for clustering.
+
 DISTRIBUTION-BASED CLUSTERING ALGORITHM-
 
 REQUIRED INPUTS:
@@ -135,10 +155,6 @@ distribution_clustering.pl
 
 REQUIRED ACCESSORY PROGRAMS:
 
-evaluate_parallel_results.pl
-
-- Use this program when running the data in parallel
-
 Merge_parent_child.pl
 
 - Use this file to create a list (similar to the output of various clustering algorithms) where each line is one OTU with the unique ids of each non-redundant seqeunce identifier listed. The parent sequence is the first entry, with children (if applicable) list in tab delimited manner following the parent on each line. The input of this program is the output of the distribution_clustering.pl program.
@@ -165,9 +181,9 @@ Files presented in the "test_data" directory can be used either as test data to 
 - ./accessory_files/new_silva_short_unique_1_149.fa is a reference alignment trimmed to the size of the construct. 
 
 
-MOTHUR-COMPLETE (not parallel)
-You can use method to process the files. Do not attempt this specific set of information with more than 1 million reads or so
-First make the output directory mothur_dir and move ./test_data/raw_data.fastq there.
+1. MOTHUR PRE-PROCESSING STEPS
+
+You can use mothur to process the files. Do not attempt this non-parallel method with more than 1 million reads or so (although the exact read count is based on the number of non-redundant sequence). First make the output directory mothur_dir and move ./test_data/raw_data.fastq there.
 
 mothur commands as follows from within the mothur_dir:
 

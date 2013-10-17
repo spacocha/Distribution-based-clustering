@@ -20,7 +20,6 @@ WHEN TO USE THIS PROGRAM:
 
 This program should be used with the scripts provided or in conjunction with other sequence analysis packages (i.e. mothur, Qiime) to obtain the operational taxonomic units (OTUs) that most accurately reflect the ecology of the input sequences they represent. This method does not cluster by distance alone, but instead using a combination to distance and distribution to inform the clustering. Thus, it is different from other methods in that it does not attempt to cluster by trying to use the rule-of-thumb genetic cut-off of 97% to estimate total species.
 
-
 REQUIREMENTS:
 
 perl (v5.8.8, other versions unverified)
@@ -110,7 +109,7 @@ Re-do step 3 after this to make sure the problem was fixed
 
 5.) Make the final files. This involves creating a list from error files, a mat file from the list, and a fasta from the mat. (You can use clean_up_parallel_ultra.csh to remove OTUs that do not match the full length of the 16S region and chimeric sequences or do this seperately)
 
-    ./clean_up_parallel_ultra.csh ./variables_file 
+    ./clean_up_parallel_ultra.csh ./all_variables
 
 The final clustered results will be in the files
 fasta of OTU representatives- ./output_dir/unique.final.fa

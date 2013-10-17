@@ -97,9 +97,7 @@ The results of this will be ./output_dir/unique.1.process.f0.err which is the re
 
     perl evaluate_parallel_results.pl ./all_variables eval_output
 
-The results will be in ./eval_output.log. This should say all files were created and all files were finished. If they were not done, you can re-do the distribution_clustering.pl command as before but add -old at the end. This will continue with the process where it left off.
-
-    perl distribution_clustering.pl -m ./output_dir/unique.1.process.f0.mat -d ./output_dir/unique.1.process.f0.align.dst,./output_dir/unique.1.process.f0.unalign.dst -out output_dir/unique.1.process.f0 -old
+The results will be in ./eval_output.log. This should say all files were created and all files were finished. If it does not indicate that all of the error files are complete, continue with step 4. If they say there are WARNINGs, this typically means the program is not calling R correctly. Check to make sure that you can call the program R by typing R on the command line, and check whether the version of R is correct. Otherwise, you will need to make adjustments. Email spacocha@mit.edu if there is a problem calling R at this step.
 
 4.) Re-run failed jobs by using the -old flag in distribution_clustering.pl for each failed process. This will continue where the program left off.
 
@@ -120,7 +118,7 @@ The above lists our pipeline for processing raw fastq data. However, many of the
 
 III. Running Distribution-based clustering without parallelization
 
-This section describes in more detail how to run one instance of distribution-based clustering. Typical datasets will not work running in this manner because of the size of the dataset and the memory required to process all of the sequences. However, it is an alternative method for very small dataset, including a way to use mothur to pre-process the samples for clustering.
+This section describes in more detail how to run one instance of distribution-based clustering. Typical datasets will not work running in this manner because of the size of the dataset and the memory required to process all of the sequences. However, it is an alternative method for very small dataset, including a way to use mothur to pre-process the samples for clustering. This is not a continuation of the steps above.
 
 DISTRIBUTION-BASED CLUSTERING ALGORITHM-
 

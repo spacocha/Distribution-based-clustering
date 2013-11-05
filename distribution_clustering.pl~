@@ -1,7 +1,7 @@
 #! /usr/bin/perl -w
 #   Edited on 08/16/12 
 #
-$programname="find_seq_errors34.pl";
+$programname="distribution_clustering.pl";
 
 	die dieHelp () unless (@ARGV); 
 

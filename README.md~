@@ -65,11 +65,31 @@ This will create a folder ./output_dir/unique_output with the results. Specifica
 \>lib2_0 HWI-EAS413_0071_FC:2:1:2111:1182#GTACGTT/1 orig_bc=GTACGTT new_bc=GTACGTT bc_diffs=0
 TACGTAGGGTGCGAGCGTTAATCGGAATTACTGGGCGTAAAGCGTGCGCAGGCGGTTTTGTAAGTCAGATGTGAAA
 
+The ./RunQiime_rawdata.csh is a shell script that runs the following commands for you. If you can not get the shell script to work, try to modify it to run each of the following commands individually
+
+A. First, use QIIME to divide your fastq file. You may need to change this for different versions of QIIME. I am including the variables (${VARIABLE}) which are taken from the ./all_variables file in the script, but you will need to replace them with the actual value if you run this on the commands line. So you would type ./test_data/raw_data.fastq instead of ${SOLFILEF} and so on.
+
+    split_libraries_fastq.py -i ${SOLFILEF} -b ${BARFILE} -o ${UNIQUE}_output -m ${MAPFILE} --barcode_type ${BARLEN} --min_per_read_length ${MINLEN} --last_bad_
+quality_char ${QUAL} --max_barcode_errors 0 --max_bad_run_length ${BADRUN} ${SLV}
+
+B. Next remove oligos (if necessary) from the sequence. This could also be done with QIIME if they have the option to remove the oligo in future version (our working version does not). Again, ${VARIABLE} will have to be replaced by the actual value from all_variables file in order to run it.
+
+   mothur "#trim.seqs(fasta=${UNIQUE}_output/seqs.fna, oligos=${OLIGO})"
+
+C. Return the names to the QIIME formatted names
+
+   perl ${BIN}/revert_names_mothur3.pl ${UNIQUE}_output/seqs.fna ${UNIQUE}_output/seqs.trim.fasta > ${UNIQUE}_output/seqs.trim.names.fasta
+
+D. Trim all of the sequences to the same length. If you don't trim sequences to the same length, shorter reads can be added to different OTUs than longer reads, even if they are the same sequence.
+
+   perl ${BIN}/truncate_fasta2.pl ${UNIQUE}_output/seqs.trim.names.fasta ${TRIM} ${UNIQUE}_output/seqs.trim.names.${TRIM}
+
+
 2.) Progressively cluster sequences with USEARCH into 90% identity clusters. The results of this will be a list of sequences within 90% identity clusters, and the full fasta and sequence by library matrix used for downstream analysis.
 
     ./ProgressiveClustering_USEARCH.csh ./all_variables
 
-The results of this is a list of sequences clustered by sequence similarity. Each line is a group (in this case 90% OTUs) which will be clustered with ditribution-based-clustering.pl independently from seqeunces on different lines. Each group (i.e. line) contains the names of the seqeunces (de-replicated so only one instance of the same sequence is represented) tab delimited. In this example, there is only one group, and there are 9 different unique sequences to be clustered.
+(Alternatively, you can use UCLUST instead of USEARCH with ./ProgressiveClustering.csh). The results of this is a list of sequences clustered by sequence similarity. Each line is a group (in this case 90% OTUs) which will be clustered with ditribution-based-clustering.pl independently from seqeunces on different lines. Each group (i.e. line) contains the names of the seqeunces (de-replicated so only one instance of the same sequence is represented) tab delimited. In this example, there is only one group, and there are 9 different unique sequences to be clustered.
 
 RUNNING DISTRIBUTION-BASED CLUSTERING IN PARALLEL:
 

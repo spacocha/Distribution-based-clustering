@@ -1,7 +1,7 @@
 #! /usr/bin/perl -w
 #   Edited on 08/16/12 
 #
-$programname="distribution_clustering.pl";
+$programname="distribution_clustering.py";
 
 	die dieHelp () unless (@ARGV); 
 
@@ -726,8 +726,8 @@ Options:
                               0 if you want to merge uninformative sequence diversity but take longer, 10 increases speed but detects many methodological errors (sequencing, PCR)
     -pval PVALUE_CUTOFF       P-value cutoff above which OTUs will be merged. Default=0.0005 (do not go below 9.999E-05 or simulated pvalues will not work) (optional)
 			      Lower pvalues create fewer OTUs, higher pvalues create more OTUs.
-    -JS JS_CUTOFF             Use the Jensen-Shannon diistance to determine whether to merge values (default=off), especially when ABUND_CUTOFF = 0. (optional)
-                              Good JS_CUTOFF value around 0.2 (best to use when abundance thresh = 0). Will be applied after failing chi-sq test cut-off. (optional)
+    -JS JS_CUTOFF             Use the Jensen-Shannon diistance to determine whether to merge values (default=off), especially when -abund 0. (optional)
+                              Good JS_CUTOFF value around 0.02 (best to use when abundance thresh = 0). Will be applied after failing chi-sq test cut-off. (optional)
     -verbose                  Print out verbose information about progress to log file. Useful in debugging. (optional)
     -dsttype                  Type of distance file (i.e. pair - like mothur format- or square- like FastTree format) (optional)
     -libtype                  Evaluate only for specific libraries. This is useful for finding sequences errors within one lane (e.g. Lane1)

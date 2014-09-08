@@ -3,9 +3,9 @@
 ''' Distribution-based clustering: version 2.0
 Accurate method for creating operational taxonomic units (OTUs) from sequence data
 Input requirements:
---input files in both OTU by library matrix and alignment files
---parameters such as the distance criteria, pvalue cutoff and abundance criteria that need to be satisfied in order to create an OTU
---output prefix name, such that it will be unique and log and err files can be created
+*input files in both OTU by library matrix and alignment files
+*parameters such as the distance criteria, pvalue cutoff and abundance criteria that need to be satisfied in order to create an OTU
+*output prefix name, such that it will be unique and log and err files can be created (currently only set to stdout)
 '''
 #needed to parse sequence files and alignments
 import Bio
@@ -36,9 +36,18 @@ def hamdist(str1, str2):
          length += 1
    #divide by the length
    percent=float(diffs)/float(length)
-         
    return percent
 
+def findlowest(str1, str2):
+      (aligndist)=hamdist(str1,str2)
+      if dounaligned:
+         print "Finding lowest between aligned and unaligned"
+         ustr1=str1.replace('-','')
+         ustr2=str2.replace('-','')
+         (ualigndist)=hamdist(ustr1, ustr2)
+         return(min(aligndist,ualigndist))
+      else:
+         return(aligndist)
 
 def runchisq(i1, i2, OTUarray, reps):
    """Given the index of two ids (existing OTU i1 and candidate i2) and the OTU matrix without headers
@@ -88,18 +97,6 @@ def runchisq(i1, i2, OTUarray, reps):
       
       
 
-#FIX THIS STUFF
-def parseinputs(file):
-   parser = argparse.ArgumentParser(description="Distribution-based clustering (versio 2.0): call OTUs considering both genetic distance and ecological similarity")
-   parser.add_argument('input_table', type=str, help='input OTU table')
-   parser.add_argument('-o', '--output', metavar='FILE', type=argparse.FileType('w'), help='output file prefix')
-   parser.add_argument('-d', '--distfile', metavar='dist', type=str, help='Optional: distance file')
-   parser.add_argument('-a', '--alignfile', metavar='align', nargs='+', type=str, help='Optional: include alignment file to compute hamming distance between sequences for clustering')
-   args = parser.parse_args()
-   #this doesn't work with headers or OTUs names
-   #figure out something else to do to get names etc
-   #THIS WORKS IF YOU USE "filename" instead of args.input_table
-
 def assignOTU(distancecriteria, abundancecriteria, pvaluecutoff, existingOTUalignment, OTUtable1, onlyOTUs, alldata,  x, i):
    """Assign sequence into an existing set of OTUs
    
@@ -122,7 +119,7 @@ def assignOTU(distancecriteria, abundancecriteria, pvaluecutoff, existingOTUalig
    print i
    L=[]
    for y in existingOTUalignment:
-      d=hamdist(x, str(y.seq))
+      d=findlowest(x, str(y.seq))
       #append this to the current list of close sequences
       L.append((d, y.name))
       
@@ -206,12 +203,12 @@ def workthroughtable (distancecriteria, abundancecriteria, pvaluecutoff, OTUtabl
          else:
             #nothing came back, so create it as a new OTU
             print "the result is nothing"
-            print "%s is parent,Done\n" % (onlyOTUs[nindex])
+            print "%s is a parent,Done\n" % (onlyOTUs[nindex])
             existingOTUalignment.append(alignment[nindex])
       else:
          #theres nothing to merge with, it's a parent (it's the first one)
          print "No OTUs exist, begin"
-         print "%s is parent,Done\n" % (onlyOTUs[nindex])
+         print "%s is a parent,Done\n" % (onlyOTUs[nindex])
          #create the existingOTUalignment to search through
          existingOTUalignment=alignment[nindex:nindex+1]
 
@@ -223,8 +220,21 @@ if __name__ == '__main__':
    parser.add_argument('-d', '--dist_cutoff', type=float, default=0.1, help='maximum genetic variation allowed to be within the same population (i.e. OTU)')
    parser.add_argument('-k', '--k_fold', default=0, type=float, help='abundance criteria: existing OTU rep must have at least k-fold increase over the candidate sequence to be joined (use 10 for seq error only)')
    parser.add_argument('-p', '--pvalue', type=float, default=0.0005, help='pvalue cut-off: this could vary depending on the total number of libraries')
+   parser.add_argument('-u', '--unaligned', type=str, default=False, help='use the unaligned sequence to correct alignment issues')
    args = parser.parse_args()
    print(datetime.now())
+   dounaligned=args.unaligned
+   global dounaligned
+   if 'dounaligned' in globals():
+      print "yes in global alignment"
+   else:
+      print "No unaligned in globals"
+
+   if 'dounaligned' in locals():
+      print "Yes in locals"
+   else:
+      print "Not in locals either"
+
    table = np.genfromtxt(args.OTUtablefile, comments="#")
    OTUtable1=table[1:,1:]
    OTUtable2 = np.genfromtxt(args.OTUtablefile, comments="#", names=True, dtype=None)

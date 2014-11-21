@@ -12,6 +12,7 @@ III. Running Distribution-based clustering without parallelization
 
 
 I. Introduction to the method
+
 DESCRIPTION:
 
 Extremely accurate algorithm used to group DNA sequences from microbial communities into operational taxonomic units (proxy for species) for ecological or biomedical research. This algorithm uses the information contained in the distribution of DNA sequences across samples along with sequence similarity to cluster sequences more accurately than other methods that are currently available. Developed for Illumina next-generation sequencing libraries, but applicable to any sequencing platform with sufficient number of counts per sample to infer distribution patterns. 
@@ -46,7 +47,7 @@ You can use our pipeline to process fastq data (if it helps), or just make a fas
 
 II. Running Distribution-based clustering in parallel
 
-Use the following outline as a guide to running data through distribution-based clustering in parallel. For any typical Illumina dataset, you will need to use a method that divides up the process of making OTUs with distribution-based clustering. The memory requirements would be too large to run a typical dataset through distribution-based clustering as a whole. So the following steps outline how the dataset can be divided with very little loss of accuracy to be processed faster and with less mempry demand.
+Use the following outline as a guide to running data through distribution-based clustering in parallel. For any typical Illumina dataset, you will need to use a method that divides up the process of making OTUs with distribution-based clustering. The memory requirements would be too large to run a typical dataset through distribution-based clustering as a whole. So the following steps outline how the dataset can be divided with very little loss of accuracy to be processed faster and with less memory demand.
 
 Many of the shell scripts (*.csh) are collections of commands calling other programs (such as mothur or FastTree etc) and can be altered to suit the needs of the user. The shell scripts are provided as guides to help identify all of the steps necessary to process Illumina data with distribution-based culstering. It is divided into two sections, PARALLEL PRE-PROCESSING STEPS which include many shell scripts and steps that are used to process the data for use with distribution-based clustering, and RUNNING DISTRIBUTION-BASED CLUSTERING IN PARALLEL, which actually runs the algorithm to make OTUs.
 
@@ -91,9 +92,41 @@ D. Trim all of the sequences to the same length. If you don't trim sequences to 
 
 (Alternatively, you can use UCLUST instead of USEARCH with ./ProgressiveClustering.csh). The results of this is a list of sequences clustered by sequence similarity. Each line is a group (in this case 90% OTUs) which will be clustered with ditribution-based-clustering.pl independently from seqeunces on different lines. Each group (i.e. line) contains the names of the seqeunces (de-replicated so only one instance of the same sequence is represented) tab delimited. In this example, there is only one group, and there are 9 different unique sequences to be clustered.
 
+This runs the progressive clustering with a shell script, but you can also either cluster just cluster to 90% with USEARCH or do it progressively as follows:
+
+A. Transform the sequences into 100% clusters (keep only unique sequences or dereplicate them). There are many ways of doing this, but I like to use my own script. fastafile_in_QIIME_format is the fasta file that was made by QIIME from the previous section. It must be in QIIME format with the library name and unique number after the lib name. unique_prefix is a unique prefix attached to all of the files
+
+   perl ./bin/fasta2unique_table5.pl fastafile_in_QIIME_format unique_prefix
+
+B. Then make the 100% clusters OTU by library matrix. unique_prefix.trans was made in the previous step. 0 is the number to be filtered to (i.e. remove any 100% OTUs with less than 0 counts across all libraries). To get rid of singletons, use 2.
+
+   perl ./bin/OTU2lib_count_trans1.pl unique_prefix.trans 0 > unique_prefix.f0.mat
+
+C. Prepare the unique fasta sequences (100% clusters) for USEARCH clustering. This counts up the number of times each sequence is observed and orders it by decreasing abundance.
+
+   perl ./bin/fasta2uchime_2.pl unique_prefix.f0.mat unique_prefix.fa > unique_prefix.ab.fa
+
+D. Cluster at 99% with USEARCH. This gathers sequences that are very similar to make sure that these relationships are preserved in the final dataset.
+
+    usearch -cluster_fast unique_prefix.ab.fa -id 0.99 -centroids unique_prefix.99.fa2 -uc unique_prefix.99.uc
+
+E. Make the output into a list of OTUs to be used later.
+
+    perl ./bin/UC2list2.pl unique_prefix.99.uc > unique_prefix.99.uc.list
+
+F. Repeat D and E for 98%, 97%, 96% ... to 90% identity.
+
+G. Fianlly gather all the data into one file where unique_prefix*.uc.list is a wildcard that inputs all of the list files that were previously generated in the preeceeding steps.
+
+   perl ./bin/merge_progressive_clustering.pl unique_prefix*.uc.list > unique_prefix.PC.final.list   
+
 RUNNING DISTRIBUTION-BASED CLUSTERING IN PARALLEL:
 
-Commonly, this program will be run in parallel on datasets that are fairly large. This section describes how to process sequences in parallel, beginning from data that is de-replicated and has an associated sequence by library count matrix associated with it.
+Commonly, this program will be run in parallel on datasets that are fairly large. This section describes how to process sequences in parallel, beginning from data that is de-replicated and has an associated sequence by library count matrix associated with it. You can run the following for each line of the unique_prefix.PC.final.list.
+
+	  eOTU_parallel.csh ./all_variables
+
+Alternatively, since this shell might not work for you, run the following (1 and 2) where you do 1 once, and 2 for the number of lines in unique_prefix.PC.final.list.
 
 1.) Create the files for processing in parallel using the output of the ProgressiveClustering_USEARCH.csh (Don't need to run this if you are using eOTU_parallel.csh)
 
@@ -129,6 +162,52 @@ Re-do step 3 after this to make sure the problem was fixed
 
     ./clean_up_parallel_ultra.csh ./all_variables
 
+clean_up_parallel_untra.csh is a shell that does the following:
+
+A. Combined all of the error files
+
+   cat unique_prefix*.f0.err > unqiue_prefix.all_err.txt
+
+B. Translate the error files into a list of sequences in an OTU where the first column are the OTU representative sequences and the other columns are other sequences in the OTU
+
+   perl ./bin/err2list3.pl unique_prefix.all_err.txt > unique_prefix.all_err.list
+
+C. Make the new OTU by library matrix including all of the sequences in each OTU
+
+   perl ./bin/list2mat.pl unique_prefix.f0.mat unique_sequences.all_err.list eco > unique_prefix.all_err.list.mat
+
+D. Get just the representative sequences for each OTU
+
+   perl ./bin/fasta2filter_from_mat.pl unique_prefix.all_err.list.mat unique_prefix.fa > unique_prefix.all_err.list.mat.fa
+
+E. Now check that each sequences is actually what you are looking for. You can do this by getting a representative alignment (like silva reference alignment for 16S) and aligning the representatives, then filtering out any sequences that do not span the entire sequenced region.
+
+   mothur "#align.seqs(fasta=unique_prefix.all_err.list.mat.fa, reference=new_silva_short_unique_1_149.fa)"
+   mothur "#(fasta=unique_prefix.all_err.list.mat.align, start=1, end=149)"
+
+F. Remove any non-16S sequences from the matrix and the representativel fasta file
+
+   perl ./bin/filter_mat_from_fasta.pl unique_prefix.all_err.list.mat unique_prefix.all_err.list.mat.good.align > unique_prefix.all_err.list.mat.good
+   perl ./bin/fasta2filter_from_mat.pl unique_prefix.all_err.list.mat unique_prefix.all_err.list.mat.good.align > unique_prefix.all_err.list.mat.good.fa
+
+G. Now prepare the representative sequences for chimera checking with uchime by adding their abundance to the data
+
+   perl ./bin/fasta2uchime_mat.pl unique_prefix.all_err.list.mat.good unique_prefix.all_err.list.mat.good.fa > unique_prefix.all_err.list.mat.good.ab.fa
+
+H. Run uchime to check for chimeras.
+
+   uchime --input unique_prefix.all_err.list.mat.good.ab.fa --uchimeout unique_prefix.all_err.list.mat.good.ab.res --minchunk 20 --abskew 10
+
+I. Remove chimeras from the final dataset
+
+   perl ./bin/filter_mat_uchime.pl unique_prefix.all_err.list.mat.good.ab.res unique_prefix.all_err.list.mat.good > unique_prefix.all_err.list.mat.good.uchime
+   perl ./bin/filter_fasta_uchime.pl unique_prefix.all_err.list.mat.good.ab.res unique_prefix.all_err.list.mat.good.fa > unique_prefix.all_err.list.mat.good.uchime.fa
+
+J. Rename the files to have short final names
+
+   mv unique_prefix.all_err.list.mat.good.uchime unique_prefix.final.mat
+   mv unique_prefix.all_err.list.mat.good.uchime.fa unique_prefix.final.fa
+
 The final clustered results will be in the files
 fasta of OTU representatives- ./output_dir/unique.final.fa
 OTU_table in tab form- ./output_dir/unique.final.mat
@@ -138,7 +217,7 @@ The above lists our pipeline for processing raw fastq data. However, many of the
 
 III. Running Distribution-based clustering without parallelization
 
-This section describes in more detail how to run one instance of distribution-based clustering. Typical datasets will not work running in this manner because of the size of the dataset and the memory required to process all of the sequences. However, it is an alternative method for very small dataset, including a way to use mothur to pre-process the samples for clustering. This is not a continuation of the steps above.
+This section describes in more detail how to run one instance of distribution-based clustering. Typical datasets will not work running in this manner because of the size of the dataset and the memory required to process all of the sequences. However, it is an alternative method for very small dataset, including a way to use mothur to pre-process the samples for clustering. This is not a continuation of the steps above. It includes another desciption of what is required as input for the distribution-based clustering program and also includes a processing pipeline with mothur.
 
 DISTRIBUTION-BASED CLUSTERING ALGORITHM-
 

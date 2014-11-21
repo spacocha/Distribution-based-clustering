@@ -2,6 +2,22 @@ Distribution-based-clustering
 =============================
 Created by Sarah Pacocha Preheim
 
+UPDATE:
+This implementation of Distribution-based clustering has been replaced with a more efficient program (dbOTUcaller). It has the same underlying principles as the original program, and performs as good or better than the original implementation, but is much more efficient and has streamlined code.
+
+To use Distribution-based clustering please visit the following website:
+https://github.com/spacocha/dbOTUcaller
+
+
+
+
+
+
+
+
+
+THIS IS ARCHIVED INFORMATION FOR THE OUT-DATED PROGRAM CODE-
+
 OUTLINE:
 
 This README.md is divided into three different sections as follows:

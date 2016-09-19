@@ -3,10 +3,10 @@ Distribution-based-clustering
 Created by Sarah Pacocha Preheim
 
 UPDATE:
-This implementation of Distribution-based clustering has been replaced with a more efficient program (dbOTUcaller). The latest implementation of Distribution-based clustering (https://github.com/spacocha/dbOTUcaller) relies on the same underlying principles, but is coded to be faster and more efficient. It is just as accurate according to all measures of program performance, but is 10x faster. Please refer to the website below to obtain the latest version of Distribution-based clustering.
+This implementation of Distribution-based clustering has been replaced with a more efficient program (dbotu3). The latest implementation of Distribution-based clustering (https://github.com/swo/dbotu3) relies on the same underlying principles, but is coded to be faster and more efficient.
 
 To use Distribution-based clustering please visit the following website:
-https://github.com/spacocha/dbOTUcaller
+https://github.com/swo/dbotu3
 
 
 

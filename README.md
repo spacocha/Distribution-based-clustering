@@ -3,15 +3,14 @@ Distribution-based-clustering
 Created by Sarah Pacocha Preheim
 
 UPDATE:
-This implementation of Distribution-based clustering has been replaced with a more efficient program (dbotu3). The latest implementation of Distribution-based clustering (https://github.com/swo/dbotu3) relies on the same underlying principles, but is coded to be faster and more efficient.
+This implementation of Distribution-based clustering has been replaced with a more efficient program (dbotu3). The latest implementation of Distribution-based clustering ( https://github.com/almlab/dbotu3) relies on the same underlying principles, but is coded to be faster and more efficient.
 
 To use Distribution-based clustering please visit the following website:
-https://github.com/swo/dbotu3
+ https://github.com/almlab/dbotu3
 
 
-
-
-
+This has also been made into a QIIME plug-in:
+https://github.com/cduvallet/q2-dbotu
 
 
 
